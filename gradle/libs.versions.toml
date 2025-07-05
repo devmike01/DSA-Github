@@ -9,8 +9,15 @@ lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
 jetbrainsKotlinJvm = "2.0.21"
+composeNav = "2.9.1"
+koinAndroid = "4.1.0"
+gson = "2.13.1"
 
 [libraries]
+gson = {group = "com.google.code.gson", name = "gson", version.ref = "gson"}
+koin-core = {group = "io.insert-koin", name = "koin-core", version.ref = "koinAndroid"}
+koin-android = {group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinAndroid"}
+compose-nav = {group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNav"}
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

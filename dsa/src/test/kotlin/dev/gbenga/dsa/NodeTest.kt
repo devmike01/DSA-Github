@@ -12,8 +12,8 @@ class NodeTest {
     @Test
     fun testNodeEquality(){
         val nextNode = Node(23)
-        var node = Node(data = 43)
-        node = node.copy(next = nextNode)
+        val node = Node(data = 43)
+        node.next = nextNode
         assertEquals(node.next, nextNode)
     }
 }

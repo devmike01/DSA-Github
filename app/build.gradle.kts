@@ -1,10 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
+val props = Properties()
+file("secrets.properties").inputStream().let { props.load(it) }
+
+
 android {
+
     namespace = "dev.gbenga.dsagithub"
     compileSdk = 35
 
@@ -18,6 +25,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -25,6 +36,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"https://api.github.com\"")
+            buildConfigField("String", "GH_SECRET", props.getProperty("githubSecret"))
+        }
+
+        debug {
+            buildConfigField("String", "GH_SECRET", props.getProperty("githubSecret"))
+            buildConfigField("String", "BASE_URL", "\"https://api.github.com\"")
         }
     }
     compileOptions {
@@ -37,15 +55,26 @@ android {
     buildFeatures {
         compose = true
     }
+
+
+
+//    configure<SourceSetContainer> {
+//        named("main") {
+//            java.srcDir("src/core/java")
+//        }
+//    }
 }
 
 dependencies {
-
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
+    implementation(libs.compose.nav)
+    implementation(libs.gson)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
@@ -56,4 +85,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(project(":dsa"))
+    implementation(kotlin("reflect"))
 }

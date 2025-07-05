@@ -1,11 +1,9 @@
 package dev.gbenga.dsa
 
 import dev.gbenga.dsa.collections.list.LinkedList
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.lang.System.Logger
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -18,7 +16,12 @@ class LinkedListTest {
         linkedList.append("Banana")
         linkedList.append("Mango")
         linkedList.append("Orange")
-        assertEquals(linkedList.lastOrNull(), "Orange")
+        linkedList.append("Watermelon")
+        assertEquals(linkedList.size(), 4)
+        assertEquals(linkedList.lastOrNull(), "Watermelon")
+        println("popped: ${linkedList.pop()}")
+        assertEquals(linkedList.size(), 3)
+        println("linkedList -> ${linkedList.toString()}")
         linkedList.clear()
         assertNull(linkedList.lastOrNull())
     }
@@ -29,6 +32,8 @@ class LinkedListTest {
         linkedList.prepend("Banana")
         linkedList.prepend("Mango")
         linkedList.prepend("Orange")
+        println("linkedList -> ${linkedList.size()}")
+        assertEquals(linkedList.size(), 3)
         assertEquals(linkedList.firstOrNull(), "Orange")
         linkedList.clear()
         assertNull(linkedList.firstOrNull())

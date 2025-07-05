@@ -5,3 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
 }
+//android.buildFeatures.buildConfig = true
+
+//tasks.register("secKey"){
+//    "7bab18003d78bb0f929ac1902b0c89783a687700"
+//}
