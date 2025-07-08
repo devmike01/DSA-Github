@@ -105,13 +105,13 @@ class LinkedList<T> {
         return curr?.data
     }
 
-    fun insertionSort(){
-        var curr : Node<T>? = head
-        while (curr != null){
-
-            curr = curr.next
-        }
-    }
+//    fun insertionSort(){
+//        var curr : Node<T>? = head
+//        while (curr != null){
+//
+//            curr = curr.next
+//        }
+//    }
 
     fun swap(x: T, y: T){
         if (x == y)return
