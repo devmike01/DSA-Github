@@ -32,9 +32,9 @@ class LinkedListTest {
         linkedList.prepend("Orange")
         println("linkedList -> ${linkedList.size()}")
         assertEquals(linkedList.size(), 3)
-        assertEquals(linkedList.firstOrNull(), "Orange")
+        assertEquals(linkedList.peekHead(), "Orange")
         linkedList.clear()
-        assertNull(linkedList.firstOrNull())
+        assertNull(linkedList.peekHead())
     }
 
     @Test
