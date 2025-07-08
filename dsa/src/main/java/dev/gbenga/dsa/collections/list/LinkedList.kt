@@ -38,8 +38,6 @@ class LinkedList<T> {
     }
 
 
-    fun firstOrNull(): T? = head?.data
-
     fun lastOrNull(): T? {
         var cur = head
         while (cur?.next != null){
