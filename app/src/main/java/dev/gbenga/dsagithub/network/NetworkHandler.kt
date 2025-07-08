@@ -47,11 +47,8 @@ class NetworkHandler( val baseUrl: String,
                             val values = data as ArrayList<T>
                             values.forEach { value ->
                                 value.let {
-                                    Log.d(TAG, "value_valA1 -> $value")
-
                                     val body = gson.toJson(value)
                                     val innerType =  gson.fromJson<T>(body, T::class.java)
-
                                     list.append(innerType)
                                 }
                             }

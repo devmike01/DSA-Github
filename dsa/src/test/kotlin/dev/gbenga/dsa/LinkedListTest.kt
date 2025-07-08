@@ -39,4 +39,31 @@ class LinkedListTest {
         assertNull(linkedList.firstOrNull())
     }
 
+    @Test
+    fun textNodeRemoval(){
+        val linkedList = LinkedList<String>()
+        linkedList.append("John")
+        linkedList.append("Judas")
+        linkedList.append("James")
+        linkedList.append("Judea")
+        println("linkedList -|> $linkedList")
+        linkedList.remove("Judea")
+        println("linkedList -|> $linkedList")
+    }
+
+    @Test
+    fun testReverse(){
+        val linkedList = LinkedList<Int>()
+        linkedList.append(2)
+        linkedList.append(10)
+        linkedList.append(1)
+        linkedList.append(3)
+        linkedList.append(0)
+        linkedList.swap(2, 1)
+        println("original: $linkedList")
+        println("original: ${linkedList.search(2)}")
+        linkedList.reverse()
+        println("original: $linkedList")
+        //
+    }
 }

@@ -1,8 +1,12 @@
 package dev.gbenga.dsagithub.features.home
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsagithub.base.AppViewModel
+import dev.gbenga.dsagithub.base.MenuIcon
+import dev.gbenga.dsagithub.base.MenuId
+import dev.gbenga.dsagithub.base.MenuItem
 import dev.gbenga.dsagithub.base.UiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +25,9 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState : StateFlow<HomeUiState> = _homeUiState.asStateFlow()
 
+    private val _menus = MutableStateFlow(LinkedList<MenuItem>())
+    val menus : StateFlow<LinkedList<MenuItem>> = _menus
+
     init {
         viewModelScope.launch {
             _homeUiState.update { it.copy(users = UiState.Loading()) }
@@ -36,5 +43,19 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
                 }
             }
         }
+    }
+
+    fun loadMenus(){
+        _menus.update {
+            LinkedList<MenuItem>().apply {
+                prepend(MenuItem(icon = MenuIcon.REVERSE))
+                prepend(MenuItem(icon = MenuIcon.SWAP))
+                prepend(MenuItem(icon = MenuIcon.SORT))
+            }
+        }
+    }
+
+    fun setOnMenuClick(id: MenuId){
+        Log.d("MenuItem", "--> MenuItem: $id")
     }
 }
