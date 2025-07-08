@@ -1,6 +1,8 @@
 package dev.gbenga.dsa.ext
 
-fun <T> StringBuffer.chain(value: T){
+import dev.gbenga.dsa.collections.list.Node
+
+fun <T> StringBuffer.chain(value: Node<T>?){
     append(value)
     append(" -> ")
 }
