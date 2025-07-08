@@ -42,7 +42,7 @@ An experimental Android application built entirely using custom implementations 
 
 - 🧠 Efficient usage in real app flows (like navigation history, task queues, etc.)
 
-### 👨‍💻 Contributing
+# 👨‍💻 Contributing
 
 We welcome contributors! You can:
 
