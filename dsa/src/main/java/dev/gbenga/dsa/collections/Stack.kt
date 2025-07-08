@@ -33,6 +33,14 @@ class StackImpl<T>(private val capacity: Int) : Stack<T> {
 
     override fun size() = count
 
+    override fun toList(): List<T> {
+        val list = mutableListOf<T>()
+        linkedList.forEach {
+            list.add(it)
+        }
+        return list
+    }
+
 
     override fun pop(): T {
         return linkedList.removeHead()?.also { count -= 1 }  ?: throw UnderflowError("Cannot pop from an empty stack")
