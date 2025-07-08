@@ -5,6 +5,7 @@ import dev.gbenga.dsa.collections.StackImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertEquals
 
 @RunWith(JUnit4::class)
 class StackTest {
@@ -12,11 +13,16 @@ class StackTest {
     @Test
     fun testPop(){
         val stack: Stack<String> = StackImpl(5)
-        stack.push("Mangoes")
         stack.push("Cherries")
+        stack.push("Mangoes")
         stack.push("Orange")
-       // stack.pop()
-        println("testPop: $stack")
+        stack.pop()
+        println(stack.toString())
+        areTheSame(stack, arrayOf("Cherries", "Mangoes").let { arr ->
+            val stack: Stack<String> = StackImpl(5)
+            arr.forEach { stack.push(it) }
+            stack
+        }.also { println(it.toString()) })
     }
 
 }
