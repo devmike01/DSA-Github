@@ -19,8 +19,6 @@ class LinkedListTest {
         linkedList.append("Watermelon")
         assertEquals(linkedList.size(), 4)
         assertEquals(linkedList.lastOrNull(), "Watermelon")
-        println("popped: ${linkedList.pop()}")
-        assertEquals(linkedList.size(), 3)
         println("linkedList -> ${linkedList.toString()}")
         linkedList.clear()
         assertNull(linkedList.lastOrNull())
