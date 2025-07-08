@@ -10,27 +10,31 @@ interface Queue<T> {
 
     fun enqueue(data: T)
 
-    fun isEmpty()
+    fun isEmpty(): Boolean
 
 }
 
-class QueueImpl<T> : Queue<T>{
+class QueueImpl<T>(private val capacity: Int) : Queue<T>{
 
     private val linkedList = LinkedList<T>()
 
+    private var count = 0
+
     override fun dequeue(): T {
-        val temp = linkedList.head?.data
-        val newNode = linkedList.head?.next
-        linkedList.head = newNode
-        return temp ?: throw UnderflowError()
+        return linkedList.peekHead()?.let {
+            count--
+             linkedList.removeHead()
+        } ?: throw UnderflowError()
     }
 
-    override fun isEmpty() {
-        TODO("Not yet implemented")
-    }
+    override fun isEmpty() = count ==0
 
     override fun enqueue(data: T) {
-        val head = linkedList.head
+        if (count >= capacity){
+            throw Exception("Queue has reached it's limit")
+        }
+        count++
+        linkedList.append(data)
     }
 
 
