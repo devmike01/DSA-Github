@@ -1,9 +1,10 @@
 package dev.gbenga.dsa.collections
 
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.toArray
 
 
-interface Stack<T>{
+interface Stack<T>: SerializedDS<T>{
     fun pop(): T
 
     fun push(value: T)
@@ -11,6 +12,9 @@ interface Stack<T>{
     fun peek(): T
 
     fun isEmpty(): Boolean
+
+    fun size(): Int
+
 }
 
 class StackImpl<T>(private val capacity: Int) : Stack<T> {
@@ -25,6 +29,9 @@ class StackImpl<T>(private val capacity: Int) : Stack<T> {
         }
         throw StackOverflowError("Stack is full")
     }
+
+
+    override fun size() = count
 
 
     override fun pop(): T {
@@ -55,4 +62,6 @@ class StackImpl<T>(private val capacity: Int) : Stack<T> {
         }
         return "[$sb]"
     }
+
+
 }
