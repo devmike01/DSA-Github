@@ -6,15 +6,24 @@ import dev.gbenga.dsa.ext.string
 
 class LinkedList<T> {
 
-    var head: Node<T>? = null;
+    private var head: Node<T>? = null
 
     private var _size =0
 
+    fun peekHead(): T? = head?.data
+
     fun size(): Int = _size
+
+    fun removeHead(): T?{
+        val removed = head
+        head = head?.next
+        return removed?.data?.also {
+            _size --
+        }
+    }
 
     fun append(value: T){
         _size += 1
-        println("______size: $_size")
         val newNode = Node(value)
         if (head  == null){
             head = newNode
@@ -40,39 +49,33 @@ class LinkedList<T> {
     }
 
     fun remove(value: T){
-        // 4 -> 3 -> 1 -> 2 -> 0
-        // rem 3
-        // 4 -> 1 -> 2 -> 0
-        var current = head
-        while (current?.next != null && current.next?.data != value){
-            current = current.next
+        if (head?.data == value){
+            head = head?.next
+            _size--
+            return
         }
-        current?.next = current?.next?.next?.also {
-            _size -= 1
-        }
-    }
 
-    fun pop(): T?{
-        if(_size == 0)return null
         var current = head
-        while (current?.next?.next != null){
+        while (current?.next != null && current.next?.data != null){
             current = current.next
         }
-        current?.next = null
-        _size -= 1
-        return current?.data
+
+        if (current?.next != null){
+            current.next = current.next?.next
+            _size--
+        }
     }
 
     fun prepend(value: T){
         // 1 -> 2 -> 0 -> null
         _size += 1
         val newNode = Node(value) // 4
-        newNode.next = head // 4 -> 1 -> 2 -> 0 -> null
-        head = newNode // head = 4 -> 1 -> 2 -> 0 -> null
+        newNode.next = head
+        head = newNode
     }
 
     fun forEach(block: (T) -> Unit){
-        var curNode: Node<T>? = head;
+        var curNode: Node<T>? = head
         while (curNode != null){
             block(curNode.data)
             curNode = curNode.next
@@ -96,22 +99,14 @@ class LinkedList<T> {
         head = prev
     }
 
+    // Linear search
     fun search(data: T): T?{
-        // 1 2 3 null; f = 2
         var curr = head
         while (curr != null && curr.data != data){
             curr = curr.next
         }
         return curr?.data
     }
-
-//    fun insertionSort(){
-//        var curr : Node<T>? = head
-//        while (curr != null){
-//
-//            curr = curr.next
-//        }
-//    }
 
     fun swap(x: T, y: T){
         if (x == y)return
@@ -153,35 +148,37 @@ class LinkedList<T> {
     }
 
     fun clear(){
-        head = null;
+        head = null
         _size =0
     }
 
-    override fun toString(): String {
-        val sb = StringBuffer()
-        var curNode: Node<T>? = head;
+    override fun toString(): String = buildString {
+        var curNode: Node<T>? = head
         while (curNode != null){
-            sb.chain(curNode.data)
+            append(curNode.data)
+            if (curNode.next != null){
+                append("->")
+            }
             curNode = curNode.next
         }
-        sb.llTail()
-        return sb.string<T>()
     }
 }
 
 
 
 
-@Suppress("UNCHECKED_CAST")
 inline fun <reified T> LinkedList<T>.toArray(): Array<T?>{
-    val array = arrayOfNulls<T>(size())
-    var index = -1
+    return this.peekHead()?.let { headData ->
+        val array = arrayOfNulls<T>(size())
+        var index = -1
 
-    var curNode: Node<T>? = this.head;
-    while (curNode != null && index < size()){
-        index += 1
-        array[index] = curNode.data
-        curNode = curNode.next
-    }
-    return array
+        var curNode: Node<T>? = Node(headData)
+        while (curNode != null && index < size()){
+            index += 1
+            array[index] = curNode.data
+            curNode = curNode.next
+        }
+        array
+    } ?: emptyArray()
+
 }
