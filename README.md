@@ -11,26 +11,26 @@ An experimental Android application built entirely using custom implementations 
 
 - 📱 Create a fully functioning Android app where contributors can see DSA in action.
 
-### 📂 Current Progress
+# 📂 Current Progress
 ✔️ Implemented
 
 ### Custom Singly Linked List
 
 ##### Features:
 
-- append(value)
+- `append(value)`
 
-- prepend(value)
+- `prepend(value)`
 
-- remove(value)
+- `remove(value)`
 
-- pop()
+- `pop()`
 
-- swap(index1, index2)
+- `swap(index1, index2)`
 
-- reverse()
+- `reverse()`
 
-### 🧭 Next Milestones
+# 🧭 Next Milestones
 
 - 🔁 Doubly Linked List
 
@@ -56,7 +56,7 @@ We welcome contributors! You can:
 
 - Improve UI/UX while preserving DSA usage.
 
-### 📌 Guidelines
+# 📌 Guidelines
 
 - Stick to pure Java/Kotlin for DSA implementations.
 
@@ -66,19 +66,19 @@ We welcome contributors! You can:
 
 - Follow clean code and naming conventions.
 
-📸 Screenshots
+# 📸 Screenshots
 <p align="center">
   <img src="media/Screenshot_20250708_012307.png" alt="Main Screen" width="360" height="720">
 </p>
 
 🛠️ Tech Stack
 
-### Language: Kotlin / Java
+# Language: Kotlin / Java
 
 - Platform: Android SDK
 
 - Testing: JUnit (for DSA structures)
 
-### 📄 License
+# 📄 License
 
 This project is open-source under the MIT License.
