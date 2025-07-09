@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
@@ -40,13 +41,14 @@ import dev.gbenga.dsagithub.base.FontSize
 import dev.gbenga.dsagithub.base.UiState
 import dev.gbenga.dsagithub.base.initial
 import dev.gbenga.dsagithub.features.home.data.User
+import dev.gbenga.dsagithub.nav.GithubDetails
 import dev.gbenga.dsagithub.ui.theme.Orange
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel = koinViewModel()){
+fun HomeScreen(navController: NavHostController, homeViewModel: HomeViewModel = koinViewModel()){
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
     var usersState by remember { mutableStateOf(LinkedList<User>()) }
@@ -82,12 +84,14 @@ fun HomeScreen(homeViewModel: HomeViewModel = koinViewModel()){
         LaunchedEffect( Unit) {
             homeViewModel.loadMenus()
         }
-       UserListView(usersState)
+       UserListView(usersState){
+           navController.navigate(GithubDetails(it))
+       }
     }
 }
 
 @Composable
-fun UserListView(users: LinkedList<User>){
+fun UserListView(users: LinkedList<User>, onUserClick: (String) -> Unit){
     val scrollable = rememberLazyListState()
     LazyColumn(state = scrollable) {
         users.forEach { user ->
@@ -96,6 +100,7 @@ fun UserListView(users: LinkedList<User>){
                 Row(
                     modifier = Modifier.clickable {
                         // clicked
+                        onUserClick(user.id.toString())
                     }.fillParentMaxWidth().padding(vertical = Dimens.mediumPadding.dp,
                         horizontal = Dimens.normalPadding.dp),
                     verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,7 @@
 [versions]
 agp = "8.10.1"
+coilCompose = "3.2.0"
+constraintlayoutCompose = "1.1.1"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -14,6 +16,9 @@ koinAndroid = "4.1.0"
 gson = "2.13.1"
 
 [libraries]
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
 gson = {group = "com.google.code.gson", name = "gson", version.ref = "gson"}
 koin-core = {group = "io.insert-koin", name = "koin-core", version.ref = "koinAndroid"}
 koin-android = {group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinAndroid"}
