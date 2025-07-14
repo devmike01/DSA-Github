@@ -13,25 +13,37 @@ interface Stack<T>: SerializedDS<T>{
 
     fun isEmpty(): Boolean
 
+    fun isNotEmpty(): Boolean
+
     fun size(): Int
 
+    fun forEach(onEach: (T) -> Unit)
+
+    fun isFull(): Boolean
 }
 
-class StackImpl<T>(private val capacity: Int) : Stack<T> {
+class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
-    private val linkedList = LinkedList<T>()
+    private var linkedList = LinkedList<T>()
 
-    private var count: Int = 0
+    private var itemCount: Int = 0
 
     private fun checkCapacity(block: () -> Unit){
-        if (count < capacity){
+        if (itemCount < capacity){
             return block()
         }
         throw StackOverflowError("Stack is full")
     }
 
+    override fun size() = itemCount
 
-    override fun size() = count
+    override fun forEach(onEach: (T) -> Unit) {
+        linkedList.forEach (onEach)
+    }
+
+    override fun isFull(): Boolean {
+        return itemCount >= size()
+    }
 
     override fun toList(): List<T> {
         val list = mutableListOf<T>()
@@ -43,18 +55,22 @@ class StackImpl<T>(private val capacity: Int) : Stack<T> {
 
 
     override fun pop(): T {
-        return linkedList.removeHead()?.also { count -= 1 }  ?: throw UnderflowError("Cannot pop from an empty stack")
+        return linkedList.removeHead()?.also { itemCount -= 1 }  ?: throw UnderflowError("Cannot pop from an empty stack")
     }
 
     override fun peek(): T  {
         return linkedList.peekHead() ?: throw EmptyStackException()
     }
 
-    override fun isEmpty(): Boolean = count == 0
+    override fun isEmpty(): Boolean = itemCount == 0
+
+    override fun isNotEmpty(): Boolean {
+        return !isEmpty()
+    }
 
     override fun push(value: T) = checkCapacity {
         // A, B, C
-        count += 1
+        itemCount += 1
         linkedList.prepend(value)
     }
 
@@ -64,7 +80,7 @@ class StackImpl<T>(private val capacity: Int) : Stack<T> {
         linkedList.forEach{
             _count += 1
             sb.append(it)
-            if (_count < count){
+            if (_count < itemCount){
                 sb.append(",")
             }
         }
