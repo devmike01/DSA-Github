@@ -64,4 +64,58 @@ class LinkedListTest {
         println("original: $linkedList")
         //
     }
+
+    @Test
+    fun testInsertionSort(){
+        val linkedList = LinkedList<Int>()
+        linkedList.append(2)
+        linkedList.append(10)
+        linkedList.append(1)
+        linkedList.append(3)
+
+    }
+
+
+
+    @Test
+    fun sampleBubbleSort(){
+        val list = mutableListOf<Int>()
+        list.add(2)
+        list.add(32)
+        list.add(22)
+        list.add(0)
+        list.add(3)
+        list.add(1)
+
+        for (i in 0 until list.size){
+            for (x in 0 until list.size){
+                if (list[i] < list[x]){
+                    val temp = list[i]
+                    list[i] = list[x]
+                    list[x] = temp
+                }
+            }
+        }
+        println("list ---> $list")
+    }
+
+
+    @Test
+    fun sampleInsertionSort(){
+        val list = mutableListOf<Int>()
+        listOf<Int>(1, 0, 4, 2).forEach {
+            list.add(it)
+        }
+
+        for (i in 0 until list.size){
+            for (x in 0 until i){
+                if (list[i] < list[x]){
+                    val temp = list[i]
+                    list[i] = list[x]
+                    list[x] = temp
+                }
+            }
+        }
+        println("listo ---> $list")
+    }
 }
