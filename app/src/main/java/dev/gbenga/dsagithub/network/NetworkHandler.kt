@@ -37,7 +37,7 @@ class NetworkHandler( val baseUrl: String,
                     setRequestProperty(TAG, BuildConfig.GH_SECRET)
                 }
                 val list = LinkedList<T>()
-                var reader : JsonReader? = null
+                var reader : JsonReader?
                 urlConnection?.let {
                     try {
                         reader = JsonReader(InputStreamReader(urlConnection.inputStream))

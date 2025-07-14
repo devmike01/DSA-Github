@@ -42,13 +42,14 @@ import dev.gbenga.dsagithub.base.UiState
 import dev.gbenga.dsagithub.base.initial
 import dev.gbenga.dsagithub.features.home.data.User
 import dev.gbenga.dsagithub.nav.GithubDetails
+import dev.gbenga.dsagithub.nav.choir.Choir
 import dev.gbenga.dsagithub.ui.theme.Orange
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController, homeViewModel: HomeViewModel = koinViewModel()){
+fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()): String{
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
     var usersState by remember { mutableStateOf(LinkedList<User>()) }
@@ -85,9 +86,10 @@ fun HomeScreen(navController: NavHostController, homeViewModel: HomeViewModel = 
             homeViewModel.loadMenus()
         }
        UserListView(usersState){
-           navController.navigate(GithubDetails(it))
+         navController.navigate(GithubDetails("hello"))
        }
     }
+    return "ANSS"
 }
 
 @Composable

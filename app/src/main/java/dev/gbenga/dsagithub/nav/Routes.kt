@@ -8,4 +8,4 @@ data object Home: Screen
 
 
 @Serializable
-data class GithubDetails(val accountId: String): Screen
+data class GithubDetails(val accountId: String=""): Screen
