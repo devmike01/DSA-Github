@@ -26,9 +26,10 @@ import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.material3.Tab
+import dev.gbenga.dsagithub.nav.choir.Choir
 
 @Composable
-fun DetailScreen(navController: NavHostController,
+fun DetailScreen(navController: Choir,
                  userId: String, detailViewModel: DetailViewModel = koinViewModel()){
     Scaffold { paddingValues ->
         ConstraintLayout (modifier = Modifier.padding(paddingValues)) {
@@ -55,7 +56,7 @@ fun DetailScreen(navController: NavHostController,
                 val pagerState = rememberPagerState(pageCount = {
                     10
                 })
-                NavigationTabRow()
+               // NavigationTabRow()
                 HorizontalPager(state = pagerState) { page ->
                     // Our page content
                     Box(modifier = Modifier.fillMaxSize()) {
