@@ -97,6 +97,47 @@ class LinkedList<T> {
         head = prev
     }
 
+//    fun <R> filter(predicate: (T) -> T): T{
+//
+//    }
+
+    fun bubbleSort(){
+        var curr = head
+//        while (curr != null){
+//            while (curr.data )
+//            curr = curr.next
+//        }
+    }
+
+    fun insertionSort(){
+        var curr = head
+        while (curr != null){
+            if (curr.data is Int){
+
+            }else if(curr.data is String){
+                var nextData = curr.next?.data as String?
+                while (curr?.next != null){
+                    if (curr.data.let { it as String } > nextData!!){
+                        val temp = nextData
+
+                    }
+                    curr = curr.next
+                }
+            }
+            curr = curr?.next
+        }
+
+
+        while (curr != null){
+
+            curr = curr.next
+        }
+    }
+
+//    fun strToInt(str: String): Int{
+//        // [love, man, go]
+//    }
+
     // Linear search
     fun search(data: T): T?{
         var curr = head
