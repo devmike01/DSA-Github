@@ -22,7 +22,7 @@ interface Stack<T>: SerializedDS<T>{
     fun isFull(): Boolean
 }
 
-class StackImpl<T>(private var capacity: Int) : Stack<T> {
+open class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
     private var linkedList = LinkedList<T>()
 
@@ -32,7 +32,7 @@ class StackImpl<T>(private var capacity: Int) : Stack<T> {
         if (itemCount < capacity){
             return block()
         }
-        throw StackOverflowError("Stack is full")
+        throw StackOverflowError("Stack is full. count: $itemCount, size: ${size()}")
     }
 
     override fun size() = itemCount

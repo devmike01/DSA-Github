@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens

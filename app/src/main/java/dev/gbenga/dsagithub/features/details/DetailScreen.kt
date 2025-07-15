@@ -1,6 +1,5 @@
 package dev.gbenga.dsagithub.features.details
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,29 +7,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
-import org.koin.androidx.compose.koinViewModel
-import androidx.compose.material3.Tab
 import dev.gbenga.dsagithub.nav.choir.Choir
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DetailScreen(navController: Choir,
                  userId: String, detailViewModel: DetailViewModel = koinViewModel()){
+    LaunchedEffect(Unit) {
+        println("DetailScreen --> $userId")
+    }
     Scaffold { paddingValues ->
         ConstraintLayout (modifier = Modifier.padding(paddingValues)) {
             val (imageBox, listColumn) = createRefs()
@@ -72,33 +64,33 @@ fun DetailScreen(navController: Choir,
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NavigationTabRow(modifier: Modifier = Modifier, ) {
-    val navController = rememberNavController()
-    val startDestination = UserDestination.Repositories
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-
-    PrimaryTabRow(selectedTabIndex = selectedDestination,
-        modifier = Modifier.padding()) {
-        UserDestination.entries.forEachIndexed { index, destination ->
-            Tab(
-                selected = selectedDestination == index,
-                onClick = {
-                    navController.navigate(route = destination.name)
-                    selectedDestination = index
-                },
-                text = {
-                    Text(
-                        text = destination.name,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            )
-        }
-    }
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun NavigationTabRow(modifier: Modifier = Modifier, ) {
+//    val navController = rememberNavController()
+//    val startDestination = UserDestination.Repositories
+//    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
+//
+//    PrimaryTabRow(selectedTabIndex = selectedDestination,
+//        modifier = Modifier.padding()) {
+//        UserDestination.entries.forEachIndexed { index, destination ->
+//            Tab(
+//                selected = selectedDestination == index,
+//                onClick = {
+//                    navController.navigate(route = destination.name)
+//                    selectedDestination = index
+//                },
+//                text = {
+//                    Text(
+//                        text = destination.name,
+//                        maxLines = 2,
+//                        overflow = TextOverflow.Ellipsis
+//                    )
+//                }
+//            )
+//        }
+//    }
+//}
 
 enum class UserDestination{
     Repositories,
