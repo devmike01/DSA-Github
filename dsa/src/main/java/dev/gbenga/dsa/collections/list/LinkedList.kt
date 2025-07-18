@@ -1,20 +1,36 @@
 package dev.gbenga.dsa.collections.list
 
-import dev.gbenga.dsa.ext.chain
-import dev.gbenga.dsa.ext.llTail
-import dev.gbenga.dsa.ext.string
+import dev.gbenga.dsa.collections.Collections
 
-class LinkedList<T> {
+interface LinkedList<T> : Collections {
+
+    fun peekHead(): T?
+    fun removeHead(): T?
+    fun append(value: T)
+    fun lastOrNull(): T?
+    fun remove(predicate: (T?) -> Boolean): Boolean
+    fun prepend(value: T)
+    fun insertionSort()
+    fun linearSearch(predicate: (T) -> Boolean): T?
+    fun swap(x: T, y: T)
+    fun forEach(block: (T) -> Unit)
+    fun bubbleSort(predicate: (T) -> Boolean): T?
+    fun size(): Int
+    fun reverse()
+    fun clear()
+}
+
+class LinkedListImpl<T> : LinkedList<T> {
 
     private var head: Node<T>? = null
 
     private var _size =0
 
-    fun peekHead(): T? = head?.data
+    override fun peekHead(): T? = head?.data
 
-    fun size(): Int = _size
+    override fun size(): Int = _size
 
-    fun removeHead(): T?{
+    override fun removeHead(): T?{
         val removed = head
         head = head?.next
         return removed?.data?.also {
@@ -22,7 +38,7 @@ class LinkedList<T> {
         }
     }
 
-    fun append(value: T){
+    override fun append(value: T){
         _size += 1
         val newNode = Node(value)
         if (head  == null){
@@ -38,7 +54,7 @@ class LinkedList<T> {
     }
 
 
-    fun lastOrNull(): T? {
+    override fun lastOrNull(): T? {
         var cur = head
         while (cur?.next != null){
             cur = cur.next
@@ -46,25 +62,32 @@ class LinkedList<T> {
         return cur?.data
     }
 
-    fun remove(value: T){
-        if (head?.data == value){
-            head = head?.next
-            _size--
-            return
-        }
-
-        var current = head
-        while (current?.next != null && current.next?.data != null){
-            current = current.next
-        }
-
-        if (current?.next != null){
-            current.next = current.next?.next
+    private fun decrementSize(){
+        if (_size > 0){
             _size--
         }
     }
 
-    fun prepend(value: T){
+    override fun remove(predicate: (T?) -> Boolean): Boolean{
+        if (predicate(head?.data)){
+            head = head?.next
+            decrementSize()
+            return true
+        }
+
+        var current = head
+        while (current?.next != null){
+            if (predicate(current.next?.data)){
+                current.next = current.next?.next
+                decrementSize()
+                return true
+            }
+            current = current.next
+        }
+        return false
+    }
+
+    override fun prepend(value: T){
         // 1 -> 2 -> 0 -> null
         _size += 1
         val newNode = Node(value) // 4
@@ -72,7 +95,7 @@ class LinkedList<T> {
         head = newNode
     }
 
-    fun forEach(block: (T) -> Unit){
+    override fun forEach(block: (T) -> Unit){
         var curNode: Node<T>? = head
         while (curNode != null){
             block(curNode.data)
@@ -81,7 +104,7 @@ class LinkedList<T> {
     }
 
 
-    fun reverse(){
+    override fun reverse(){
         // 1 -> 2 -> 4 -> 0 -> null
         if (head ==null){
             return
@@ -101,53 +124,26 @@ class LinkedList<T> {
 //
 //    }
 
-    fun bubbleSort(){
-        var curr = head
-//        while (curr != null){
-//            while (curr.data )
-//            curr = curr.next
-//        }
+    override fun bubbleSort(data: (T) -> Boolean): T?{
+        TODO("Not yet implemented")
     }
 
-    fun insertionSort(){
-        var curr = head
-        while (curr != null){
-            if (curr.data is Int){
-
-            }else if(curr.data is String){
-                var nextData = curr.next?.data as String?
-                while (curr?.next != null){
-                    if (curr.data.let { it as String } > nextData!!){
-                        val temp = nextData
-
-                    }
-                    curr = curr.next
-                }
-            }
-            curr = curr?.next
-        }
-
-
-        while (curr != null){
-
-            curr = curr.next
-        }
+    override fun insertionSort(){
+        TODO("Not yet implemented")
     }
 
-//    fun strToInt(str: String): Int{
-//        // [love, man, go]
-//    }
 
-    // Linear search
-    fun search(data: T): T?{
+    // Takes O(n)
+    override fun linearSearch(predicate: (T) -> Boolean): T?{
         var curr = head
-        while (curr != null && curr.data != data){
+        // Negate to search the linkedlist until we can find the item
+        while (curr != null && !predicate.invoke(curr.data)){
             curr = curr.next
         }
         return curr?.data
     }
 
-    fun swap(x: T, y: T){
+    override fun swap(x: T, y: T){
         if (x == y)return
 
         var prevX : Node<T>? = null
@@ -186,7 +182,7 @@ class LinkedList<T> {
 
     }
 
-    fun clear(){
+    override fun clear(){
         head = null
         _size =0
     }
@@ -200,6 +196,14 @@ class LinkedList<T> {
             }
             curNode = curNode.next
         }
+    }
+
+    override fun isEmpty(): Boolean {
+        return _size ==0
+    }
+
+    override fun isNotEmpty(): Boolean {
+        return !isEmpty()
     }
 }
 

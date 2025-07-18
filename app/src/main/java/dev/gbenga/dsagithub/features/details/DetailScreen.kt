@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -17,13 +19,20 @@ import coil3.compose.AsyncImage
 import dev.gbenga.dsagithub.nav.choir.Choir
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(navController: Choir,
                  userId: String, detailViewModel: DetailViewModel = koinViewModel()){
     LaunchedEffect(Unit) {
         println("DetailScreen --> $userId")
     }
-    Scaffold { paddingValues ->
+    Scaffold(
+        topBar = {
+            TopAppBar(title = {
+                Text("Details")
+            },)
+        }
+    ) { paddingValues ->
         ConstraintLayout (modifier = Modifier.padding(paddingValues)) {
             val (imageBox, listColumn) = createRefs()
             Box(modifier = Modifier.constrainAs(imageBox) {

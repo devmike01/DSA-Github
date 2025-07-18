@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.FontSize
@@ -51,7 +52,7 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()): String{
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
-    var usersState by remember { mutableStateOf(LinkedList<User>()) }
+    var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
 
 
     val scope = rememberCoroutineScope()

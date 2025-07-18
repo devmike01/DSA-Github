@@ -1,6 +1,7 @@
 package dev.gbenga.dsa.collections
 
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsa.collections.list.Node
 
 
@@ -16,7 +17,7 @@ interface Queue<T> {
 
 class QueueImpl<T>(private val capacity: Int) : Queue<T>{
 
-    private val linkedList = LinkedList<T>()
+    private val linkedList = LinkedListImpl<T>()
 
     private var count = 0
 

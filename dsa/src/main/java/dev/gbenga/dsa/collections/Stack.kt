@@ -1,19 +1,16 @@
 package dev.gbenga.dsa.collections
 
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsa.collections.list.toArray
 
 
-interface Stack<T>: SerializedDS<T>{
+interface Stack<T>: Collections, SerializedDS<T>{
     fun pop(): T
 
     fun push(value: T)
 
     fun peek(): T
-
-    fun isEmpty(): Boolean
-
-    fun isNotEmpty(): Boolean
 
     fun size(): Int
 
@@ -24,7 +21,7 @@ interface Stack<T>: SerializedDS<T>{
 
 open class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
-    private var linkedList = LinkedList<T>()
+    private var linkedList = LinkedListImpl<T>()
 
     private var itemCount: Int = 0
 

@@ -22,14 +22,4 @@ fun AppNavHost(){
 
     }
 
-//    val navController = rememberNavController()
-//    NavHost(navController = navController, startDestination = Home){
-//        composable<Home> {
-//            HomeScreen(navController)
-//        }
-//        composable<GithubDetails> {
-//            val gDetails = it.toRoute<GithubDetails>()
-//            DetailScreen(userId=gDetails.accountId, navController = navController)
-//        }
-//    }
 }

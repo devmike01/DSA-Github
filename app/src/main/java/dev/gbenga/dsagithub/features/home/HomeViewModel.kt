@@ -3,6 +3,7 @@ package dev.gbenga.dsagithub.features.home
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsagithub.base.AppViewModel
 import dev.gbenga.dsagithub.base.MenuIcon
 import dev.gbenga.dsagithub.base.MenuId
@@ -25,7 +26,7 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState : StateFlow<HomeUiState> = _homeUiState.asStateFlow()
 
-    private val _menus = MutableStateFlow(LinkedList<MenuItem>())
+    private val _menus = MutableStateFlow<LinkedList<MenuItem>>(LinkedListImpl<MenuItem>())
     val menus : StateFlow<LinkedList<MenuItem>> = _menus
 
     init {
@@ -34,7 +35,7 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
             homeRepository.getUsers().let { usersState ->
                 if(usersState.isSuccess){
                     _homeUiState.update {
-                        it.copy(users =  UiState.Success(usersState.getOrDefault(LinkedList())))
+                        it.copy(users =  UiState.Success(usersState.getOrDefault(LinkedListImpl())))
                     }
                 }else{
                     _homeUiState.update {
@@ -47,7 +48,7 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
 
     fun loadMenus(){
         _menus.update {
-            LinkedList<MenuItem>().apply {
+            LinkedListImpl<MenuItem>().apply {
                 prepend(MenuItem(icon = MenuIcon.REVERSE))
                 prepend(MenuItem(icon = MenuIcon.SWAP))
                 prepend(MenuItem(icon = MenuIcon.SORT))

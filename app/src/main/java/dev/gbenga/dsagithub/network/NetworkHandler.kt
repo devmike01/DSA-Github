@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsagithub.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,7 +37,7 @@ class NetworkHandler( val baseUrl: String,
                 val urlConnection = (url?.openConnection() as HttpURLConnection?)?.apply{
                     setRequestProperty(TAG, BuildConfig.GH_SECRET)
                 }
-                val list = LinkedList<T>()
+                val list : LinkedList<T> = LinkedListImpl<T>()
                 var reader : JsonReader?
                 urlConnection?.let {
                     try {
