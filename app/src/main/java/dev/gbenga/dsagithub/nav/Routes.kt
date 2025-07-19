@@ -1,5 +1,6 @@
 package dev.gbenga.dsagithub.nav
 
+import dev.gbenga.dsagithub.features.home.data.User
 import kotlinx.serialization.Serializable
 
 
@@ -8,7 +9,7 @@ data object Home: Screen
 
 
 @Serializable
-data class GithubDetails(val accountId: String=""): Screen
+data class GithubDetails(val userData: User? = null): Screen
 
 
 class Solution {

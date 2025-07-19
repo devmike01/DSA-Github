@@ -1,27 +1,17 @@
 package dev.gbenga.dsagithub.nav.choir
 
-import android.content.Context
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.gbenga.dsa.collections.CustomMap
-import dev.gbenga.dsa.collections.EmptyStackException
 import dev.gbenga.dsa.collections.HashMap
-import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
-import dev.gbenga.dsa.collections.list.LinkedList
-import dev.gbenga.dsa.collections.list.LinkedListImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,15 +20,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 
 enum class NavType{
-    POPPED, ADD, IDLE, REPLACE
+    POPPED, ADD, IDLE
 }
+
 data class NavNode(val key: Any?=null,
                    val route: Any?=null,
                    val type: NavType = NavType.IDLE)
@@ -50,30 +37,8 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
     val routes = routeBuilder(choir)
     var currentRoute = remember { mutableStateOf<Any?>(null) }
     var onCreateLifeCycle by rememberSaveable {mutableStateOf(false)}
-    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-           when(event){
-               Lifecycle.Event.ON_START -> {
-                   onCreateLifeCycle = true
-               }
-               Lifecycle.Event.ON_STOP -> {
-                   onCreateLifeCycle = false
-                   choir.cancel()
-               }
-               else -> {}
-           }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     LaunchedEffect(Unit) {
-        //if (!onCreateLifeCycle)return@LaunchedEffect
         choir.setInitialRoute(initialDestination)
         println("onCreateLifeCycle -> $onCreateLifeCycle")
         choir.routes.collect {
@@ -86,7 +51,7 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
                     }
                 }
                 NavType.ADD -> {
-                    currentRoute.value = it.route
+                    currentRoute.value =  it.route
                 }
                 else ->{
                     Log.d("ChoirNavHost", "init route")
@@ -152,7 +117,6 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
         }
         val navNode = stack.pop()
         ioCoroutine.launch {
-            println("popNotify: $navNode")
             _sharedFlow.emit(navNode.copy(type = NavType.POPPED))
             delay(cancelMillis)
             this@launch.cancel()
@@ -166,11 +130,10 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
 
 class Choir() {
 
-    val argumentMap = HashMap<Any, Any?>()
-    val _routes : FlowNavNodeStack = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
+    var argStack = StackImpl<Any>(INITIAL_ROUTE_CAPACITY)
+    private val _routes : FlowNavNodeStack = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
     val routes: SharedFlow<NavNode> = _routes.flowStack
     val registeredRoutes : CustomMap<Any, Any> = HashMap<Any, Any>()
-    //fun getArg(): Any = navigationStack.
 
     companion object{
 
@@ -189,37 +152,32 @@ class Choir() {
         //_routes.cancel()
     }
 
-    inline fun <reified T: Any> asRoute(): T?{
-        var arg: T? = null
-        argumentMap.values().forEach {
-            if (it is T){
-                arg = it
+    internal inline fun <reified T: Any> asRoute(): T?{
+        val temp = StackImpl<Any>(argStack.size())
+        while (argStack.isNotEmpty()){
+            val routes = argStack.pop().also {
+                temp.push(it)
+            }
+            if (routes is T){
+                return routes
             }
         }
-        return arg
+        argStack = temp
+        return  null
     }
 
-    fun navigate(route: Any){
+    fun <C: Any> navigate(route: C){
         registeredRoutes.getOrNull(route::class)?.let {
-            println("registeredRoutes -> $it")
+
+            argStack.push(route)
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)
         }
+
     }
 
     inline fun <reified klass: Any> putRoute(page: Any){
 
-        val clazz = Class.forName(klass::class.qualifiedName ?: "")
-        val instance = clazz.getDeclaredConstructor().newInstance()
-        val klazz = clazz.kotlin
-        val primaryConstructor = klazz.primaryConstructor
-        primaryConstructor?.parameters?.let { params ->
-            for (param in params){
-                val valueProperty = klazz.memberProperties.find { it.name == param.name }
-                val value = valueProperty?.getter?.call(instance)
-                argumentMap.put(klass::class, value)
-            }
-        }
 
         registeredRoutes.put(klass::class, page)
     }

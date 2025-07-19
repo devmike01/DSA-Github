@@ -1,5 +1,7 @@
 package dev.gbenga.dsagithub.features
 
+import dev.gbenga.dsagithub.features.details.DetailRepository
+import dev.gbenga.dsagithub.features.details.DetailRepositoryImpl
 import dev.gbenga.dsagithub.features.details.DetailViewModel
 import dev.gbenga.dsagithub.features.home.HomeRepository
 import dev.gbenga.dsagithub.features.home.HomeRepositoryImpl
@@ -12,6 +14,7 @@ import org.koin.dsl.module
 
 val featureModule = module{
     singleOf(::HomeRepositoryImpl) bind HomeRepository::class
+    singleOf(::DetailRepositoryImpl) bind DetailRepository::class
     viewModel { HomeViewModel(get()) }
-    viewModel{ DetailViewModel() }
+    viewModel{ DetailViewModel(get()) }
 }

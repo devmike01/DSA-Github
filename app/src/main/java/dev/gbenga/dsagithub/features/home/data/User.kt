@@ -3,6 +3,7 @@ package dev.gbenga.dsagithub.features.home.data
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 
+@Serializable
 data class User(
     @SerializedName("login")
     val login: String,

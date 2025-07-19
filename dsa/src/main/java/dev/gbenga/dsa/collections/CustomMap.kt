@@ -4,9 +4,11 @@ import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
 import kotlin.math.absoluteValue
 
-interface CustomMap<K, V>: Collections{
+interface CustomMap<K, V>: Collections<K>{
 
     fun put(key: K, value: V)
+
+    operator fun set(key: K, value: V)
 
     fun getOrNull(key: K): V?
 
@@ -56,6 +58,10 @@ class HashMap<K, V> : CustomMap<K, V> {
         if (size > buckets.size * LOAD_FACTOR){
             resize()
         }
+    }
+
+    override fun set(key: K, value: V) {
+        put(key, value)
     }
 
     override fun getOrNull(key: K): V?{
@@ -123,5 +129,17 @@ class HashMap<K, V> : CustomMap<K, V> {
 
     override fun isNotEmpty(): Boolean {
        return !isEmpty()
+    }
+
+    override fun bubbleSort(predicate: (K) -> Boolean): K? {
+        TODO("Not yet implemented")
+    }
+
+    override fun linearSearch(predicate: (K) -> Boolean): K? {
+        TODO("Not yet implemented")
+    }
+
+    override fun remove(predicate: (K?) -> Boolean): Boolean {
+        TODO("Not yet implemented")
     }
 }

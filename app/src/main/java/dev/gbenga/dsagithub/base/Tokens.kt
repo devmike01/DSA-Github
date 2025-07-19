@@ -6,6 +6,7 @@ object Dimens {
     const val mediumPadding = 15
     const val largePadding = 25
     const val avatarSize = 40
+    const val repoIconSize = 50
 }
 
 object FontSize {

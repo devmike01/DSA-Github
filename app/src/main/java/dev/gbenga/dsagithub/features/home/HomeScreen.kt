@@ -85,15 +85,15 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
         LaunchedEffect( Unit) {
             homeViewModel.loadMenus()
         }
-       UserListView(usersState){
-         navController.navigate(GithubDetails("hello"))
+       UserListView(usersState){ user ->
+         navController.navigate(GithubDetails(user))
        }
     }
     return "ANSS"
 }
 
 @Composable
-fun UserListView(users: LinkedList<User>, onUserClick: (String) -> Unit){
+fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
     val scrollable = rememberLazyListState()
     LazyColumn(state = scrollable) {
         users.forEach { user ->
@@ -102,7 +102,7 @@ fun UserListView(users: LinkedList<User>, onUserClick: (String) -> Unit){
                 Row(
                     modifier = Modifier.clickable {
                         // clicked
-                        onUserClick(user.id.toString())
+                        onUserClick(user)
                     }.fillParentMaxWidth().padding(vertical = Dimens.mediumPadding.dp,
                         horizontal = Dimens.normalPadding.dp),
                     verticalAlignment = Alignment.CenterVertically,

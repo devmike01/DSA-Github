@@ -5,7 +5,7 @@ import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsagithub.base.UiState
 
 data class DetailsUiState(
-    val content: UiState<LinkedList<TabContent>> = UiState.Loading())
+    val userRepos: UiState<LinkedList<UserRepositories>> = UiState.Loading())
 
 data class TabContent(val tab: String="",
                       val content: LinkedList<TabContent> = LinkedListImpl()

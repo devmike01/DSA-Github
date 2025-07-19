@@ -5,7 +5,7 @@ import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsa.collections.list.toArray
 
 
-interface Stack<T>: Collections, SerializedDS<T>{
+interface Stack<T>: Collections<T>, SerializedDS<T>{
     fun pop(): T
 
     fun push(value: T)
@@ -66,6 +66,14 @@ open class StackImpl<T>(private var capacity: Int) : Stack<T> {
     override fun isNotEmpty(): Boolean {
         return !isEmpty()
     }
+
+    override fun bubbleSort(predicate: (T) -> Boolean): T? = linkedList.bubbleSort(predicate)
+
+    override fun linearSearch(predicate: (T) -> Boolean): T? {
+        return linkedList.linearSearch (predicate)
+    }
+
+    override fun remove(predicate: (T?) -> Boolean): Boolean = linkedList.remove(predicate)
 
     override fun push(value: T) = checkCapacity {
         // A, B, C

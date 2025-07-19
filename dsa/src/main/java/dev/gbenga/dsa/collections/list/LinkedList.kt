@@ -2,19 +2,16 @@ package dev.gbenga.dsa.collections.list
 
 import dev.gbenga.dsa.collections.Collections
 
-interface LinkedList<T> : Collections {
+interface LinkedList<T> : Collections<T> {
 
     fun peekHead(): T?
     fun removeHead(): T?
     fun append(value: T)
     fun lastOrNull(): T?
-    fun remove(predicate: (T?) -> Boolean): Boolean
     fun prepend(value: T)
     fun insertionSort()
-    fun linearSearch(predicate: (T) -> Boolean): T?
     fun swap(x: T, y: T)
     fun forEach(block: (T) -> Unit)
-    fun bubbleSort(predicate: (T) -> Boolean): T?
     fun size(): Int
     fun reverse()
     fun clear()

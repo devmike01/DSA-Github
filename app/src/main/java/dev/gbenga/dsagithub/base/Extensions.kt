@@ -1,8 +1,9 @@
 package dev.gbenga.dsagithub.base
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-
 fun String.initial(): String{
     return this[0].uppercase()
+}
+
+fun String.titleCase(): String {
+    return this.let { "${it.initial()}${it.substring(1).lowercase()}"}
 }
