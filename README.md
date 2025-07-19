@@ -62,7 +62,7 @@ We welcome contributors! You can:
 
 # 📸 Screenshots
 <p align="center">
-  <img src="media/Screenshot_20250708_012307.png" alt="Main Screen" width="160" height="520">
+  <img src="media/Screenshot_20250719_225151.png" alt="Main Screen" width="160" height="520">
   <img src="media/Screenshot_20250719_225005.png" alt="Main Screen" width="160" height="520">
 </p>
 
