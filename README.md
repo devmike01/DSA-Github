@@ -17,9 +17,9 @@ An experimental Android application built entirely using custom implementations 
 
 ### Custom Data Structures
 - HashMap - Used in routes
-- Stack - Used to track current routes
+- Stack - Used to track current route
 - Queue
-- LinkedList - Used as the inner list for hashmap, queue and stack data structures
+- LinkedList - Used as the inner list in hashmap, queue and stack data structures
 
 # 🧭 Next Milestones
 
