@@ -3,6 +3,7 @@ package dev.gbenga.dsagithub.nav.choir
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,10 +41,7 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     LaunchedEffect(Unit) {
         choir.setInitialRoute(initialDestination)
-        println("onCreateLifeCycle -> $onCreateLifeCycle")
         choir.routes.collect {
-            println("LifeCycless -> ${choir.last()} - ${it.route}")
-
             when(it.type){
                 NavType.POPPED -> {
                     choir.last()?.route?.let { route ->
@@ -61,6 +59,11 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            choir.cancel()
+        }
+    }
 
     // Display current route
     currentRoute.value?.let {
@@ -81,7 +84,6 @@ fun rememberChoir(): Choir{
 
 @Composable
 inline fun <reified T: Any> Choir.singNav(noinline route: @Composable () -> Any) : CustomMap<Any, Any>{
-    println("new_route -> ${route}")
     putRoute<T>(route)
     return registeredRoutes
 }
@@ -103,14 +105,13 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
             stack.push(navNode)
             _sharedFlow.emit(navNode.copy(
                 type = NavType.ADD))
-            this.cancel()
         }
 
     }
 
 
     // Pop and notify the state
-    fun popNotify(onLast: (() -> Unit)? = null, cancelMillis: Long=100){
+    fun popNotify(onLast: (() -> Unit)? = null,){
         if (stack.size() <= 1){
             onLast?.invoke()
             return
@@ -118,8 +119,6 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
         val navNode = stack.pop()
         ioCoroutine.launch {
             _sharedFlow.emit(navNode.copy(type = NavType.POPPED))
-            delay(cancelMillis)
-            this@launch.cancel()
         }
     }
 
@@ -149,7 +148,6 @@ class Choir() {
 
     fun popBackStack(onLast: (() -> Unit)? = null){
         _routes.popNotify(onLast=onLast)
-        //_routes.cancel()
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -177,8 +175,6 @@ class Choir() {
     }
 
     inline fun <reified klass: Any> putRoute(page: Any){
-
-
         registeredRoutes.put(klass::class, page)
     }
 

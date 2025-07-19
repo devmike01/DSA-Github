@@ -20,7 +20,6 @@ fun AppNavHost(){
             val gDetails = this.asRoute<GithubDetails>() ?: GithubDetails()
             DetailScreen(user = gDetails.userData, navController =choirRoutes )
         }
-
     }
 
 }
