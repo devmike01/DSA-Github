@@ -5,5 +5,6 @@ fun String.initial(): String{
 }
 
 fun String.titleCase(): String {
+    if(this.length < 2) return ""
     return this.let { "${it.initial()}${it.substring(1).lowercase()}"}
 }

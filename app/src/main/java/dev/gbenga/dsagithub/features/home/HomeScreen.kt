@@ -6,18 +6,25 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,7 +57,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()): String{
+fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()){
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
     var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
@@ -89,15 +97,68 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
          navController.navigate(GithubDetails(user))
        }
     }
-    return "ANSS"
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    var selectedPage by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+
+    Column {
+        PrimaryTabRow(selectedTabIndex = pagerState.currentPage,
+            modifier = Modifier.padding(PaddingValues(Dimens.smallPadding.dp))) {
+            arrayOf("Users", "Favourite Users").forEachIndexed {index, title ->
+                Tab(
+                    selected = pagerState.currentPage == selectedPage,
+                    onClick = {
+                        Log.d("PrimaryTab", "index $index")
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = title,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                )
+            }
+        }
+        HorizontalPager(pagerState) {
+            selectedPage = it
+            when(it){
+                0 -> {
+                    HomeUserListView(users, onUserClick)
+                }
+                1 -> {
+                    FavoriteScreen()
+                }
+            }
+        }
+    }
 }
 
 @Composable
-fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
+fun FavoriteScreen(){
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Text("Favorite")
+        }
+        item {
+            Text("Favorite")
+        }
+    }
+}
+
+@Composable
+fun HomeUserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
     val scrollable = rememberLazyListState()
     LazyColumn(state = scrollable) {
         users.forEach { user ->
-            Log.d("UserListView", "$user")
             item {
                 Row(
                     modifier = Modifier.clickable {
@@ -123,7 +184,7 @@ fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
                     }
                     Text(user.login)
                 }
-                HorizontalDivider( )
+                HorizontalDivider()
             }
         }
     }

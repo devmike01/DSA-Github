@@ -4,8 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -143,34 +145,11 @@ fun DetailScreen(navController: Choir,
                             userRepos.size
                         })
 
-                        HorizontalPager(state = pagerState) { page ->
-                            val pageOffSet = pagerState.currentPage - page + pagerState.currentPageOffsetFraction
+                        HorizontalPager(state = pagerState,
 
+                            contentPadding = PaddingValues(end = Dimens.largePadding.dp),) { page ->
                             RepositoryCard(userRepos[page],
-                                modifier = Modifier.graphicsLayer{
-
-                                    alpha = lerp(
-                                        start = 0.7f,
-                                        stop = 1f,
-                                        fraction = 1f - pageOffSet.absoluteValue.coerceIn(0f, 1f),
-                                    )
-
-                                    cameraDistance = 8 * density
-                                    rotationY = lerp(
-                                        start = 0f,
-                                        stop = 0f,
-                                        fraction = pageOffSet.coerceIn(-1f, 1f),
-                                    )
-
-                                    lerp(
-                                        start = 0.8f,
-                                        stop = 1f,
-                                        fraction = 1f - pageOffSet.absoluteValue.coerceIn(0f, 1f),
-                                    ).also { scale ->
-                                        scaleX = scale
-                                        scaleY = scale
-                                    }
-                                })
+                                modifier = Modifier)
                         }
                     }
                     is UiState.Error ->{
@@ -199,7 +178,7 @@ fun RepositoryCard(userRepos: UserRepositories?, modifier: Modifier){
         ConstraintLayout(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(Dimens.mediumPadding.dp)
+                .padding(Dimens.smallPadding.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(PurpleGrey40).fillMaxWidth()
             .padding(horizontal = Dimens.mediumPadding.dp)
@@ -213,27 +192,24 @@ fun RepositoryCard(userRepos: UserRepositories?, modifier: Modifier){
                     bottom.linkTo(parent.bottom)
                     start.linkTo(parent.start)
                 }.size(Dimens.repoIconSize.dp)
-                    .drawBehind{
-                        drawRoundRect(color = PurpleGrey40,
-                            cornerRadius = CornerRadius(
-                                x = Dimens.smallPadding.toFloat(),
-                                y = Dimens.smallPadding.toFloat()),
-                            size = Size(80f, 80f))
-                    })
+            )
             Column(modifier = Modifier.constrainAs(repoContent) {
                 top.linkTo(parent.top)
                 bottom.linkTo(parent.bottom)
                 start.linkTo(image.end)
-            }.padding(horizontal = Dimens.mediumPadding.dp)) {
+            }.padding(horizontal = Dimens.mediumPadding.dp),
+                verticalArrangement = Arrangement.spacedBy(Dimens.normalPadding.dp)) {
                 Text(userRepos.full_name.titleCase(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier)
-                Text(userRepos.description,
+
+                Text(userRepos.description ?: "N/A",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier)
 
+
                 Text("${userRepos.forks} Forks " +
-                        "· ${if(userRepos.fork) "Forked" else "Original Creator"} " +
+                        //"· ${if(userRepos.fork) "Forked" else "Original Creator"} " +
                         "· ${userRepos.language}",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier)
