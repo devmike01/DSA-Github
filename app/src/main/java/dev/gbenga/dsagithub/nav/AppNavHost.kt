@@ -17,8 +17,8 @@ fun AppNavHost(){
             HomeScreen(choirRoutes)
         }
         singNav<GithubDetails> {
-            val gDetails = this.asRoute<GithubDetails>() ?: GithubDetails()
-            DetailScreen(user = gDetails.userData, navController =choirRoutes )
+            val gDetails = this.asRoute<GithubDetails>()
+            DetailScreen(user = gDetails?.userData, navController =choirRoutes )
         }
     }
 
