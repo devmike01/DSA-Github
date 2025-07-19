@@ -1,7 +1,8 @@
 # 📱 DSA Android App
 
 An experimental Android application built entirely using custom implementations of fundamental Data Structures and Algorithms (DSA). This project aims to reinforce understanding of core data structures by applying them in a real-world app scenario — without relying on Java's built-in data structures like ArrayList, LinkedList, Stack, etc.
-🚀 Project Goals
+
+# 🚀 Project Goals
 
 - ✅ Build an Android app that leverages only user-implemented data structures.
 
@@ -14,33 +15,23 @@ An experimental Android application built entirely using custom implementations 
 # 📂 Current Progress
 ✔️ Implemented
 
-### Custom Singly Linked List
-
-##### Features:
-
-- `append(value)`
-
-- `prepend(value)`
-
-- `remove(value)`
-
-- `pop()`
-
-- `swap(index1, index2)`
-
-- `reverse()`
+### Custom Data Structures
+- HashMap - Used in routes
+- Stack - Used to track current routes
+- Queue
+- LinkedList - Used as the inner list for hashmap, queue and stack data structures
 
 # 🧭 Next Milestones
 
 - 🔁 Doubly Linked List
 
-- 🧱 Stack (built using the custom Linked List)
+- 🧱 ~~Stack (built using the custom Linked List)~~
 
-- 📥 Queue
+- 📥 ~~Queue~~
 
 - 🌳 Binary Trees (Binary Search Tree, AVL, etc.)
 
-- 🧠 Efficient usage in real app flows (like navigation history, task queues, etc.)
+- 🧠 ~~Efficient usage in real app flows (like navigation history, task queues, etc.)~~
 
 # 👨‍💻 Contributing
 
