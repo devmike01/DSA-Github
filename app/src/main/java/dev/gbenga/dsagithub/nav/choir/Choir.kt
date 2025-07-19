@@ -1,5 +1,6 @@
 package dev.gbenga.dsagithub.nav.choir
 
+import android.content.Context
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.gbenga.dsa.collections.CustomMap
+import dev.gbenga.dsa.collections.EmptyStackException
 import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
@@ -24,16 +26,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 enum class NavType{
-    POPPED, ADD, IDLE
+    POPPED, ADD, IDLE, REPLACE
 }
 data class NavNode(val key: Any?=null,
                    val route: Any?=null,
@@ -68,14 +72,18 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
         }
     }
 
-    LaunchedEffect(onCreateLifeCycle) {
-        if (!onCreateLifeCycle)return@LaunchedEffect
+    LaunchedEffect(Unit) {
+        //if (!onCreateLifeCycle)return@LaunchedEffect
         choir.setInitialRoute(initialDestination)
         println("onCreateLifeCycle -> $onCreateLifeCycle")
         choir.routes.collect {
+            println("LifeCycless -> ${choir.last()} - ${it.route}")
+
             when(it.type){
                 NavType.POPPED -> {
-                    currentRoute.value = routes.values().lastOrNull()
+                    choir.last()?.route?.let { route ->
+                        currentRoute.value = route  //it.route
+                    }
                 }
                 NavType.ADD -> {
                     currentRoute.value = it.route
@@ -119,25 +127,35 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
 
     private val _sharedFlow = MutableSharedFlow<NavNode>()
     val flowStack: SharedFlow<NavNode> get() = _sharedFlow.asSharedFlow()
+
     internal val stack = StackImpl<NavNode>(10)
 
+    fun last() = stack.peek()
 
     // Push and notify the state
     fun pushNotify(navNode: NavNode){
         ioCoroutine.launch {
             stack.push(navNode)
-
-            _sharedFlow.emit(navNode.copy(type = NavType.ADD))
+            _sharedFlow.emit(navNode.copy(
+                type = NavType.ADD))
+            this.cancel()
         }
 
-        println("route_stack: $stack")
     }
 
 
     // Pop and notify the state
-    fun popNotify(){
+    fun popNotify(onLast: (() -> Unit)? = null, cancelMillis: Long=100){
+        if (stack.size() <= 1){
+            onLast?.invoke()
+            return
+        }
+        val navNode = stack.pop()
         ioCoroutine.launch {
-            _sharedFlow.emit(stack.pop().copy(type = NavType.POPPED))
+            println("popNotify: $navNode")
+            _sharedFlow.emit(navNode.copy(type = NavType.POPPED))
+            delay(cancelMillis)
+            this@launch.cancel()
         }
     }
 
@@ -164,9 +182,11 @@ class Choir() {
         navigate(key)
     }
 
-    fun popBackStack(){
-        // Pop top stack
-        _routes.popNotify()
+    fun last() = _routes.last()
+
+    fun popBackStack(onLast: (() -> Unit)? = null){
+        _routes.popNotify(onLast=onLast)
+        //_routes.cancel()
     }
 
     inline fun <reified T: Any> asRoute(): T?{

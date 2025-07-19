@@ -10,7 +10,7 @@ interface Stack<T>: Collections, SerializedDS<T>{
 
     fun push(value: T)
 
-    fun peek(): T
+    fun peek(): T?
 
     fun size(): Int
 
@@ -52,11 +52,13 @@ open class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
 
     override fun pop(): T {
-        return linkedList.removeHead()?.also { itemCount -= 1 }  ?: throw UnderflowError("Cannot pop from an empty stack")
+        return linkedList.removeHead()?.also {
+            itemCount -= 1
+        }  ?: throw UnderflowError("Cannot pop from an empty stack")
     }
 
-    override fun peek(): T  {
-        return linkedList.peekHead() ?: throw EmptyStackException()
+    override fun peek(): T?  {
+        return linkedList.peekHead() //?: throw EmptyStackException()
     }
 
     override fun isEmpty(): Boolean = itemCount == 0
