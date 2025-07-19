@@ -93,7 +93,7 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
     private val _sharedFlow = MutableSharedFlow<NavNode>()
     val flowStack: SharedFlow<NavNode> get() = _sharedFlow.asSharedFlow()
 
-    internal val stack = StackImpl<NavNode>(10)
+    internal val stack = StackImpl<NavNode>(capacity)
 
     fun last() = stack.peek()
 
