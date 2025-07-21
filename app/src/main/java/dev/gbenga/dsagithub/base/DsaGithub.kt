@@ -1,6 +1,7 @@
 package dev.gbenga.dsagithub.base
 
 import android.app.Application
+import dev.gbenga.dsagithub.data.database.databaseModule
 import dev.gbenga.dsagithub.features.featureModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -13,7 +14,7 @@ class DsaGithub : Application() {
         startKoin {
             androidLogger()
             androidContext(this@DsaGithub)
-            modules(appModules, featureModule)
+            modules(appModules, databaseModule, featureModule)
         }
     }
 }

@@ -1,6 +1,5 @@
 package dev.gbenga.dsagithub.nav
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import dev.gbenga.dsagithub.features.details.DetailScreen
 import dev.gbenga.dsagithub.features.home.HomeScreen
@@ -18,7 +17,7 @@ fun AppNavHost(){
         }
         singNav<GithubDetails> {
             val gDetails = this.asRoute<GithubDetails>()
-            DetailScreen(user = gDetails?.userData, navController =choirRoutes )
+            DetailScreen(userName = gDetails?.userName, avatarUrl =gDetails?.avatarUrl, navController =choirRoutes )
         }
     }
 

@@ -13,14 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SnackbarHostState
@@ -28,6 +27,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +48,8 @@ import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.FontSize
 import dev.gbenga.dsagithub.base.UiState
 import dev.gbenga.dsagithub.base.initial
+import dev.gbenga.dsagithub.base.titleCase
+import dev.gbenga.dsagithub.data.database.Favourite
 import dev.gbenga.dsagithub.features.home.data.User
 import dev.gbenga.dsagithub.nav.GithubDetails
 import dev.gbenga.dsagithub.nav.choir.Choir
@@ -60,6 +62,8 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()){
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
+    val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
+
     var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
 
 
@@ -92,16 +96,19 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 
         LaunchedEffect( Unit) {
             homeViewModel.loadMenus()
+            homeViewModel.loadGithubUsers()
+            homeViewModel.loadFavourite()
         }
-       UserListView(usersState){ user ->
-         navController.navigate(GithubDetails(user))
+       HomeContent(usersState, favUsersState.favUsers){ userName, avatarUrl ->
+         navController.navigate(GithubDetails(userName, avatarUrl))
        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
+fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
+                onUserClick: (String, String) -> Unit){
     val pagerState = rememberPagerState(pageCount = { 2 })
     var selectedPage by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
@@ -135,7 +142,7 @@ fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
                     HomeUserListView(users, onUserClick)
                 }
                 1 -> {
-                    FavoriteScreen()
+                    FavoriteScreen(favoriteUsers, onUserClick)
                 }
             }
         }
@@ -143,49 +150,57 @@ fun UserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
 }
 
 @Composable
-fun FavoriteScreen(){
+fun FavoriteScreen(favoriteUsers: LinkedList<Favourite>, onUserClick: (String, String) -> Unit){
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            Text("Favorite")
-        }
-        item {
-            Text("Favorite")
+        favoriteUsers.forEach { favUser ->
+            item {
+                HomeItem(favUser.userName, onUserClick = {
+                    onUserClick(favUser.userName, favUser.avatarUrl)
+                })
+            }
         }
     }
 }
 
 @Composable
-fun HomeUserListView(users: LinkedList<User>, onUserClick: (User) -> Unit){
+fun HomeUserListView(users: LinkedList<User>, onUserClick: (String, String) -> Unit){
     val scrollable = rememberLazyListState()
     LazyColumn(state = scrollable) {
         users.forEach { user ->
             item {
-                Row(
-                    modifier = Modifier.clickable {
-                        // clicked
-                        onUserClick(user)
-                    }.fillParentMaxWidth().padding(vertical = Dimens.mediumPadding.dp,
-                        horizontal = Dimens.normalPadding.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.mediumPadding.dp)
-                ) {
-                    val shape = CircleShape
-                    Box(modifier = Modifier
-                        .size(Dimens.avatarSize.dp)
-                        .clip(shape)
-                        .background(Orange)
-                        .border(width = 2.dp, color = Color.LightGray,
-                            shape = shape)
-                        .padding(Dimens.smallPadding.dp)) {
-                        Text(user.login.initial(),
-                            modifier = Modifier.align(Alignment.Center),
-                            style = MaterialTheme.typography
-                                .bodyLarge.copy(fontSize = FontSize.xLarge.sp))
-                    }
-                    Text(user.login)
-                }
-                HorizontalDivider()
+                HomeItem(user.login, onUserClick ={
+                    onUserClick(user.login, user.avatarUrl)
+                })
             }
         }
     }
+}
+
+@Composable
+private fun LazyItemScope.HomeItem(login: String, onUserClick: (String) -> Unit){
+    Row(
+        modifier = Modifier.clickable {
+            // clicked
+            onUserClick(login)
+        }.fillParentMaxWidth().padding(vertical = Dimens.mediumPadding.dp,
+            horizontal = Dimens.normalPadding.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.mediumPadding.dp)
+    ) {
+        val shape = CircleShape
+        Box(modifier = Modifier
+            .size(Dimens.avatarSize.dp)
+            .clip(shape)
+            .background(Orange)
+            .border(width = 2.dp, color = Color.LightGray,
+                shape = shape)
+            .padding(Dimens.smallPadding.dp)) {
+            Text(login.initial(),
+                modifier = Modifier.align(Alignment.Center),
+                style = MaterialTheme.typography
+                    .bodyLarge.copy(fontSize = FontSize.xLarge.sp))
+        }
+        Text(login.titleCase())
+    }
+    HorizontalDivider()
 }

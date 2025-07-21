@@ -26,6 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import dev.gbenga.dsagithub.R
@@ -56,29 +60,53 @@ import dev.gbenga.dsagithub.base.titleCase
 import dev.gbenga.dsagithub.features.home.data.User
 import dev.gbenga.dsagithub.nav.choir.Choir
 import dev.gbenga.dsagithub.ui.theme.PurpleGrey40
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(navController: Choir,
-                 user: User?,
+                 userName: String?,
+                 avatarUrl: String?,
                  detailViewModel: DetailViewModel = koinViewModel()){
-    if (user == null){
+    if (userName == null){
         navController.popBackStack()
         return
     }
 
-    val detailsState by detailViewModel.details.collectAsState()
+    val detailsState by detailViewModel.details.collectAsStateWithLifecycle()
     var userRepos = remember { derivedStateOf { detailsState.userRepos } }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
-        detailViewModel.populateDetailsTabContent(user.login)
+        detailViewModel.favouriteStatus.collect { status ->
+            when(status){
+                is UiState.Success ->{
+                    scope.launch {
+                        snackbarHostState.showSnackbar(status.data)
+                    }
+                }
+                is UiState.Error ->{
+                    snackbarHostState.showSnackbar(status.errorMsg)
+                }
+                else ->{}
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        detailViewModel.populateDetailsTabContent(userName)
     }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(title = {
-                Text(user.login.titleCase())
+                Text(userName.titleCase())
             },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -92,7 +120,9 @@ fun DetailScreen(navController: Choir,
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                detailViewModel.favoriteUser()
+                avatarUrl?.let {
+                    detailViewModel.favoriteUser(userName, avatarUrl)
+                }
             }) {
                 Icon(Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite user")
@@ -114,7 +144,7 @@ fun DetailScreen(navController: Choir,
                 // add image
                 AsyncImage(
                     modifier = Modifier.fillMaxWidth(),
-                    model = user.avatarUrl,
+                    model = avatarUrl,
                     contentDescription = null,
                     onState = {
                         loadingImage = it is AsyncImagePainter.State.Loading
@@ -130,7 +160,7 @@ fun DetailScreen(navController: Choir,
                 end.linkTo(parent.end)
             }) {
 
-                Text("${user.login.titleCase()}'s Repositories",
+                Text("${userName.titleCase()}'s Repositories",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(Dimens.mediumPadding.dp))
                 when(val repos = userRepos.value){
@@ -146,7 +176,6 @@ fun DetailScreen(navController: Choir,
                         })
 
                         HorizontalPager(state = pagerState,
-
                             contentPadding = PaddingValues(end = Dimens.largePadding.dp),) { page ->
                             RepositoryCard(userRepos[page],
                                 modifier = Modifier)

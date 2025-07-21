@@ -2,6 +2,7 @@ package dev.gbenga.dsagithub.nav.choir
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +14,7 @@ import androidx.compose.runtime.setValue
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.StackImpl
+import dev.gbenga.dsagithub.nav.GithubDetails
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,13 +36,18 @@ data class NavNode(val key: Any?=null,
 @Suppress("unchecked_cast")
 @Composable
 fun ChoirNavHost(choir : Choir, initialDestination: Any,
-                 routeBuilder: @Composable Choir.() -> CustomMap<Any, Any>){
+                 routeBuilder: @Composable Choir.() -> Any){
+
     val routes = routeBuilder(choir)
+
     var currentRoute = remember { mutableStateOf<Any?>(null) }
-    var onCreateLifeCycle by rememberSaveable {mutableStateOf(false)}
+    Log.d("routeBuilder", "routes: $routes")
+
+    LaunchedEffect(initialDestination) {
+        choir.setInitialRoute(initialDestination)
+    }
 
     LaunchedEffect(Unit) {
-        choir.setInitialRoute(initialDestination)
         choir.routes.collect {
             when(it.type){
                 NavType.POPPED -> {
@@ -66,8 +73,10 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
     }
 
     // Display current route
-    currentRoute.value?.let {
-        (it as @Composable () -> Any).invoke() // compose
+    Crossfade(targetState = currentRoute.value) { targetState ->
+        targetState?.let {
+            (it as @Composable () -> Any).invoke() // compose
+        }
     }
 
 
@@ -81,6 +90,7 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 fun rememberChoir(): Choir{
     return remember { Choir()}
 }
+
 
 @Composable
 inline fun <reified T: Any> Choir.singNav(noinline route: @Composable () -> Any) : CustomMap<Any, Any>{
@@ -129,15 +139,16 @@ class FlowNavNodeStack(capacity: Int, val ioCoroutine: CoroutineScope = Coroutin
 
 class Choir() {
 
+    companion object{
+        const val INITIAL_ROUTE_CAPACITY = 10
+    }
+
+
+
     var argStack = StackImpl<Any>(INITIAL_ROUTE_CAPACITY)
     private val _routes : FlowNavNodeStack = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
     val routes: SharedFlow<NavNode> = _routes.flowStack
     val registeredRoutes : CustomMap<Any, Any> = HashMap<Any, Any>()
-
-    companion object{
-
-        const val INITIAL_ROUTE_CAPACITY = 10
-    }
 
 
     fun setInitialRoute(key: Any){
@@ -166,7 +177,6 @@ class Choir() {
 
     fun <C: Any> navigate(route: C){
         registeredRoutes.getOrNull(route::class)?.let {
-
             argStack.push(route)
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)

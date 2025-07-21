@@ -26,10 +26,15 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState : StateFlow<HomeUiState> = _homeUiState.asStateFlow()
 
+    private val _favUserUiState = MutableStateFlow(FavUsersUiState())
+    val favUserUiState : StateFlow<FavUsersUiState> = _favUserUiState.asStateFlow()
+
+    //FavUsersUiState
+
     private val _menus = MutableStateFlow<LinkedList<MenuItem>>(LinkedListImpl<MenuItem>())
     val menus : StateFlow<LinkedList<MenuItem>> = _menus
 
-    init {
+    fun loadGithubUsers(){
         viewModelScope.launch {
             _homeUiState.update { it.copy(users = UiState.Loading()) }
             homeRepository.getUsers().let { usersState ->
@@ -46,12 +51,22 @@ class HomeViewModel(private val homeRepository: HomeRepository) : AppViewModel()
         }
     }
 
+
     fun loadMenus(){
         _menus.update {
             LinkedListImpl<MenuItem>().apply {
                 prepend(MenuItem(icon = MenuIcon.REVERSE))
                 prepend(MenuItem(icon = MenuIcon.SWAP))
                 prepend(MenuItem(icon = MenuIcon.SORT))
+            }
+        }
+    }
+
+    fun loadFavourite(){
+        viewModelScope.launch {
+            homeRepository.getFavourites().collect { favUsers ->
+                Log.d("loadFavourite", "--> MenuItem: $favUsers")
+                _favUserUiState.update { it.copy(favUsers = favUsers) }
             }
         }
     }
