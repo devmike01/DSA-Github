@@ -5,7 +5,7 @@ import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsa.collections.list.toArray
 
 
-interface Stack<T>: Collections<T>, SerializedDS<T>{
+interface Stack<T>: Collections<T>{
     fun pop(): T
 
     fun push(value: T)
@@ -17,6 +17,8 @@ interface Stack<T>: Collections<T>, SerializedDS<T>{
     fun forEach(onEach: (T) -> Unit)
 
     fun isFull(): Boolean
+
+    fun toList(): List<T>
 }
 
 open class StackImpl<T>(private var capacity: Int) : Stack<T> {

@@ -17,7 +17,6 @@ class StackTest {
         stack.push("Mangoes")
         stack.push("Orange")
         stack.pop()
-        println(stack.toString())
         areTheSame(stack, arrayOf("Cherries", "Mangoes").let { arr ->
             val stack: Stack<String> = StackImpl(5)
             arr.forEach { stack.push(it) }

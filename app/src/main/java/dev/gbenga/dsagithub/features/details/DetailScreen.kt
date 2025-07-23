@@ -70,10 +70,6 @@ fun DetailScreen(navController: Choir,
                  userName: String?,
                  avatarUrl: String?,
                  detailViewModel: DetailViewModel = koinViewModel()){
-    if (userName == null){
-        navController.popBackStack()
-        return
-    }
 
     val detailsState by detailViewModel.details.collectAsStateWithLifecycle()
     var userRepos = remember { derivedStateOf { detailsState.userRepos } }
@@ -106,7 +102,7 @@ fun DetailScreen(navController: Choir,
         },
         topBar = {
             TopAppBar(title = {
-                Text(userName.titleCase())
+                Text(userName?.titleCase() ?: "")
             },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -121,7 +117,7 @@ fun DetailScreen(navController: Choir,
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 avatarUrl?.let {
-                    detailViewModel.favoriteUser(userName, avatarUrl)
+                    detailViewModel.favoriteUser(userName ?: "", avatarUrl)
                 }
             }) {
                 Icon(Icons.Default.FavoriteBorder,
@@ -160,7 +156,7 @@ fun DetailScreen(navController: Choir,
                 end.linkTo(parent.end)
             }) {
 
-                Text("${userName.titleCase()}'s Repositories",
+                Text("${userName?.titleCase()}'s Repositories",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(Dimens.mediumPadding.dp))
                 when(val repos = userRepos.value){

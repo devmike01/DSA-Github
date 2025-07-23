@@ -22,17 +22,16 @@ class QueueImpl<T>(private val capacity: Int) : Queue<T>{
     private var count = 0
 
     override fun dequeue(): T {
-        return linkedList.peekHead()?.let {
-            count--
-             linkedList.removeHead()
-        } ?: throw UnderflowError()
+        val deq = linkedList.removeHead() ?: throw UnderflowError()
+        count--
+        return deq
     }
 
     override fun isEmpty() = count ==0
 
     override fun enqueue(data: T) {
         if (count >= capacity){
-            throw Exception("Queue has reached it's limit")
+            throw Exception("Queue has reached it's limit. count: $count, capacity: $capacity")
         }
         count++
         linkedList.append(data)

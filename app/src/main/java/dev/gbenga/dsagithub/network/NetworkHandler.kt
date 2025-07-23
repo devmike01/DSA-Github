@@ -34,13 +34,14 @@ class NetworkHandler( val baseUrl: String,
     suspend inline fun <reified T, reified R> httpConnection(): Result<R>?{
         return withContext(ioContext){
             try {
-                val urlConnection = (url?.openConnection() as HttpURLConnection?)?.apply{
-                    setRequestProperty(TAG, BuildConfig.GH_SECRET)
-                }
+                val urlConnection = (url?.openConnection() as HttpURLConnection?)
+                urlConnection?.setRequestProperty("Authorization", "token ${BuildConfig.GH_SECRET}")
+                urlConnection?.setRequestProperty("Accept", "application/vnd.github.v3+json")
                 val list : LinkedList<T> = LinkedListImpl<T>()
                 var reader : JsonReader?
                 urlConnection?.let {
                     try {
+                        println("Endpoint: ${urlConnection.url}")
                         reader = JsonReader(InputStreamReader(urlConnection.inputStream))
                         val data = gson.fromJson<Any>(reader, TypeToken.get(Any::class.java).type)
 

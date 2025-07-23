@@ -6,7 +6,7 @@ import kotlin.math.absoluteValue
 
 interface CustomMap<K, V>: Collections<K>{
 
-    fun put(key: K, value: V)
+    fun put(key: K, value: V): Boolean
 
     operator fun set(key: K, value: V)
 
@@ -19,6 +19,8 @@ interface CustomMap<K, V>: Collections<K>{
     fun keys(): LinkedList<K>
 
     val size : Int
+
+    fun clear()
 }
 
 class HashMap<K, V> : CustomMap<K, V> {
@@ -34,7 +36,8 @@ class HashMap<K, V> : CustomMap<K, V> {
 
     override var size = 0
 
-    override fun put(key: K, value: V){
+
+    override fun put(key: K, value: V): Boolean{
         var index = key.getIndex()
         if (buckets[index] == null){
             buckets[index] = LinkedListImpl()
@@ -49,7 +52,7 @@ class HashMap<K, V> : CustomMap<K, V> {
         }
 
         if (updated){
-            return
+            return true
         }
 
         bucket.append(Entry(key, value))
@@ -58,6 +61,7 @@ class HashMap<K, V> : CustomMap<K, V> {
         if (size > buckets.size * LOAD_FACTOR){
             resize()
         }
+        return false
     }
 
     override fun set(key: K, value: V) {
@@ -110,6 +114,12 @@ class HashMap<K, V> : CustomMap<K, V> {
 
     fun <K> K.getIndex(): Int{
         return hashCode().absoluteValue.rem(buckets.size)
+    }
+
+
+    override fun clear() {
+        buckets = arrayOfNulls(0)
+        size = 0
     }
 
     override fun toString(): String {

@@ -29,9 +29,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,15 +62,8 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()){
-    val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
+
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
-    val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
-
-    var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
-
-
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     var showLoading by remember { mutableStateOf(false) }
 
     DefaultScaffold(topBarTitle = "Home",
@@ -76,6 +71,15 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
         actions = menuItems, onClickMenuItem = {
             homeViewModel.setOnMenuClick(it)
         }) {
+
+        val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
+        val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
+        var refresh by remember { mutableStateOf(false) }
+        var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
+
+        val scope = rememberCoroutineScope()
+        val snackbarHostState = remember { SnackbarHostState() }
+
         LaunchedEffect(homeUiState.users) {
             when(val users = homeUiState.users){
                 is UiState.Success ->{
@@ -94,12 +98,14 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
             }
         }
 
-        LaunchedEffect( Unit) {
+        LaunchedEffect(Unit) {
             homeViewModel.loadMenus()
             homeViewModel.loadGithubUsers()
             homeViewModel.loadFavourite()
         }
-       HomeContent(usersState, favUsersState.favUsers){ userName, avatarUrl ->
+       HomeContent(usersState, favUsersState.favUsers, onLoadMore = {
+           homeViewModel.loadMoreGithubUsers()
+       }){ userName, avatarUrl ->
          navController.navigate(GithubDetails(userName, avatarUrl))
        }
     }
@@ -108,9 +114,11 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
+                onLoadMore: () -> Unit,
                 onUserClick: (String, String) -> Unit){
+
     val pagerState = rememberPagerState(pageCount = { 2 })
-    var selectedPage by remember { mutableStateOf(0) }
+    var selectedPage by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
     Column {
@@ -139,7 +147,7 @@ fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
             selectedPage = it
             when(it){
                 0 -> {
-                    HomeUserListView(users, onUserClick)
+                    HomeUserListView(users, onUserClick, onLoadMore)
                 }
                 1 -> {
                     FavoriteScreen(favoriteUsers, onUserClick)
@@ -162,10 +170,31 @@ fun FavoriteScreen(favoriteUsers: LinkedList<Favourite>, onUserClick: (String, S
     }
 }
 
+
+private const val buffer = 1
+
 @Composable
-fun HomeUserListView(users: LinkedList<User>, onUserClick: (String, String) -> Unit){
-    val scrollable = rememberLazyListState()
-    LazyColumn(state = scrollable) {
+fun HomeUserListView(users: LinkedList<User>,
+                     onUserClick: (String, String) -> Unit,
+                     onLoadMore: () -> Unit){
+    val listState = rememberLazyListState()
+
+    // observe list scrolling
+    val reachedBottom: Boolean by remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastVisibleItem?.index != 0 && lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - buffer
+        }
+    }
+
+    LaunchedEffect(reachedBottom) {
+        if(reachedBottom){ // https://api.github.com/users?per_page=2&since=2
+            // Load more
+            onLoadMore()
+        }
+    }
+
+    LazyColumn(state = listState) {
         users.forEach { user ->
             item {
                 HomeItem(user.login, onUserClick ={

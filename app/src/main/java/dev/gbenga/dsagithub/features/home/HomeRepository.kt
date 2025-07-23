@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 interface HomeRepository {
-    suspend fun getUsers(): Result<LinkedList<User>>
+    suspend fun getUsers(since: Int? =null): Result<LinkedList<User>>
     suspend fun getUserById(id: String): Result<LinkedList<User>>
     suspend fun addToFavourites(favourite: Favourite): Result<String>
     fun getFavourites(): Flow<LinkedList<Favourite>>
@@ -29,8 +29,10 @@ class HomeRepositoryImpl(private val network: NetworkHandler,
         const val TAG = "HomeRepository"
     }
 
-    override suspend fun getUsers(): Result<LinkedList<User>> {
-        return network.get<User, LinkedList<User>>("users")
+    override suspend fun getUsers(since: Int?): Result<LinkedList<User>> {
+        var query : String = since?.let {"?per_page=20&since=$it"} ?: ""
+        return network.get<User,
+                LinkedList<User>>("users$query")
     }
 
     override suspend fun getUserById(id: String): Result<LinkedList<User>> {

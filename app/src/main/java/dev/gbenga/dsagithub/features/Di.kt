@@ -1,5 +1,6 @@
 package dev.gbenga.dsagithub.features
 
+import androidx.lifecycle.SavedStateHandle
 import dev.gbenga.dsagithub.features.details.DetailRepository
 import dev.gbenga.dsagithub.features.details.DetailRepositoryImpl
 import dev.gbenga.dsagithub.features.details.DetailViewModel
@@ -19,6 +20,6 @@ val featureModule = module{
     single { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
     singleOf(::HomeRepositoryImpl) bind HomeRepository::class
     singleOf(::DetailRepositoryImpl) bind DetailRepository::class
-    viewModel { HomeViewModel(get()) }
+    viewModel { (handle: SavedStateHandle) -> HomeViewModel(get(), handle) }
     viewModel{ DetailViewModel(get(), get()) }
 }
