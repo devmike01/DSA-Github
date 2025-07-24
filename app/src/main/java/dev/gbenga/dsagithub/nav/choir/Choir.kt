@@ -10,30 +10,28 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
+import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
-import dev.gbenga.dsagithub.nav.GithubDetails
 import dev.gbenga.dsagithub.nav.RouteCache
+import dev.gbenga.dsagithub.nav.Screen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.io.Serializable
 
 enum class NavType{
     POPPED, ADD, IDLE, RESTORED
 }
 
-data class NavNode(val key: Any?=null,
+data class NavNode<K>(val key: K?=null,
                    val route: Any?=null,
                    val type: NavType = NavType.IDLE)
 
@@ -45,21 +43,30 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
     val routes = routeBuilder(choir)
 
     var currentRoute = remember { mutableStateOf<Any?>(null) }
+    var currentRouteKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val arguments = rememberSaveable { choir.argMap }
 
     LaunchedEffect(Unit) {
-        choir.setInitialRoute(initialDestination)
+        val cachedRoute = arguments.getOrNull(currentRouteKey?.split(" ")[1])
+        choir.restoreRoutes(arguments)
+        println("currentRoute: $cachedRoute - $arguments")
+        choir.navigate(cachedRoute ?: initialDestination)
     }
 
     LaunchedEffect(Unit) {
-        choir.routes.collect {
-            when(it.type){
+        choir.routes.collect { navNode ->
+
+            Log.d("ChoirNavHost", "init route -> ${navNode.key} ${navNode.type}")
+            when(navNode.type){
                 NavType.POPPED -> {
-                    choir.last()?.route?.let { route ->
-                        currentRoute.value = route  //it.route
+                    choir.last()?.let {
+                        currentRouteKey = it.key?.toString()
+                        currentRoute.value = it.route // it.key?.toString()
                     }
                 }
-                NavType.ADD -> {
-                    currentRoute.value =  it.route
+                NavType.ADD, NavType.RESTORED  -> {
+                    currentRoute.value =  navNode.route
+                    currentRouteKey = navNode.key?.toString()
                 }
                 else ->{
                     Log.d("ChoirNavHost", "init route")
@@ -75,11 +82,12 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
         }
     }
 
+    println("currentRouteNEW#: ${currentRoute.value}")
     // Display current route
     Crossfade(targetState = currentRoute.value) { targetState ->
         targetState?.let {
             (it as @Composable () -> Any).invoke() // compose
-        } ?: println("currentRoute -> $targetState")
+        }
     }
 
 
@@ -106,21 +114,46 @@ inline fun <reified T: Any> Choir.singNav(noinline route: @Composable () -> Any)
 class FlowNavNodeStack(capacity: Int,
                        val ioCoroutine: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)) {
 
-    private val _sharedFlow = MutableSharedFlow<NavNode>(replay = 1)
-    val flowStack: SharedFlow<NavNode> get() = _sharedFlow.asSharedFlow()
+    private val _sharedFlow = MutableSharedFlow<NavNode<*>>(replay = 1)
+    val peekFlow: SharedFlow<NavNode<*>> get() = _sharedFlow.asSharedFlow()
 
-    internal val stack = StackImpl<NavNode>(capacity)
+    internal val stack = StackImpl<NavNode<*>>(capacity)
 
     fun lastOrNull() = stack.peek()
 
+
+    fun silentPush(navNode: NavNode<*>){
+        stack.push(navNode.copy(type = NavType.RESTORED))
+    }
+
     // Push and notify the state
-    fun pushNotify(navNode: NavNode){
+    fun pushNotify(navNode: NavNode<*>){
+        val existingNode = stack.linearSearch { it.key == navNode.key }
+        println("existingNode: $existingNode")
         ioCoroutine.launch {
-            stack.push(navNode)
-            _sharedFlow.emit(navNode.copy(
-                type = NavType.ADD))
+            if (existingNode != null){
+                _sharedFlow.emit(navNode.copy(
+                    type = NavType.RESTORED))
+            }else{
+                stack.push(navNode)
+                _sharedFlow.emit(navNode.copy(
+                    type = NavType.ADD))
+            }
         }
 
+    }
+
+
+    fun pushAllNotify(navNodeStack: Stack<NavNode<*>>){
+        ioCoroutine.launch {
+            while (navNodeStack.isNotEmpty()){
+                stack.push(navNodeStack.pop().copy(type = NavType.RESTORED))
+            }
+            stack.peek()?.copy(
+                type = NavType.RESTORED)?.let {
+                pushNotify(it)
+            }
+        }
     }
 
 
@@ -141,62 +174,58 @@ class FlowNavNodeStack(capacity: Int,
     }
 }
 
-class Choir(private val routeCache: RouteCache= RouteCache.get()) {
+class Choir() {
 
 
     companion object{
         const val INITIAL_ROUTE_CAPACITY = 10
-        var isInitial : Boolean = false
     }
 
-
-    var argStack = StackImpl<Any>(INITIAL_ROUTE_CAPACITY)
+    var argMap : CustomMap<String?, Any> = HashMap() // key is object's qualifiedName name
     private val _routes : FlowNavNodeStack = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
-    val routes: SharedFlow<NavNode> = _routes.flowStack
+    val routes: SharedFlow<NavNode<*>> = _routes.peekFlow
     val registeredRoutes : CustomMap<Any, Any> = HashMap<Any, Any>()
 
     fun last() = _routes.lastOrNull()
 
-
     fun popBackStack(onLast: (() -> Unit)? = null){
-        println("setInitialRoute: POPPED")
+        println("_routes_routes: ${_routes.stack}")
         _routes.popNotify(onLast=onLast)
     }
 
-    internal inline fun <reified T: Any> asRoute(): T?{
-        val temp = StackImpl<Any>(INITIAL_ROUTE_CAPACITY)
-        while (argStack.isNotEmpty()){
-            val routes = argStack.pop().also {
-                temp.push(it)
-            }
-            if (routes is T){
-                return routes
+    fun restoreRoutes(routes: CustomMap<String?, Any>){
+        routes.keys().forEach { key ->
+            key?.let { // TODO: Works but arrangement is wrong and thus popped the wrong route
+                val klazz = Class.forName(it).kotlin
+                _routes.silentPush(NavNode(key = klazz,
+                    route=registeredRoutes.getOrNull(klazz)))
             }
         }
-        argStack = temp
-        return  null
+        println("restoreRoutes ->${_routes.stack}")
     }
 
-    fun <C: Any> setInitialRoute(route: C){
-
-        println("setInitialRoute: ${_routes.lastOrNull()} ${routeCache.getOrNull("route")}")
-        navigate(_routes.lastOrNull() ?: route)
+    internal inline fun <reified T: Any> asRoute(): T?{
+        return  argMap.getOrNull(T::class.qualifiedName) as? T
     }
+
 
     fun <C: Any> navigate(route: C){
         registeredRoutes.getOrNull(route::class)?.let {
-            argStack.push(route)
+            argMap[route::class.qualifiedName] = route
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)
-            routeCache["route"] = _routes.stack
         }
 
     }
 
+    /**
+     * @param page is a composable screen
+     **/
     inline fun <reified klass: Any> putRoute(page: Any): Boolean{
         if (registeredRoutes.getOrNull(page) != null){
             return false
         }
+        println("currentRouteNEW: $page")
         return registeredRoutes.put(klass::class, page)
     }
 
