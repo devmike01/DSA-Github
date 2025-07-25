@@ -2,6 +2,7 @@ package dev.gbenga.dsa.collections
 
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
+import java.io.Serializable
 import kotlin.math.absoluteValue
 
 interface CustomMap<K, V>: Collections<K>{
@@ -30,7 +31,7 @@ class HashMap<K, V> : CustomMap<K, V> {
     }
 
 
-    internal data class Entry <K, V>(val key: K, var value: V)
+    internal data class Entry <K, V>(val key: K, var value: V): Serializable
 
     internal var buckets : Array<LinkedList<Entry<K, V>>?> = arrayOfNulls(INITIAL_SIZE)
 
@@ -152,4 +153,6 @@ class HashMap<K, V> : CustomMap<K, V> {
     override fun remove(predicate: (K?) -> Boolean): Boolean {
         TODO("Not yet implemented")
     }
+
+
 }

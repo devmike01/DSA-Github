@@ -1,5 +1,7 @@
 package dev.gbenga.dsagithub.nav
 
-interface Screen{
+import java.io.Serializable
+
+interface Screen: Serializable{
 
 }

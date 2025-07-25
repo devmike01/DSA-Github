@@ -101,6 +101,8 @@ class LinkedListImpl<T> : LinkedList<T> {
     }
 
 
+
+
     override fun reverse(){
         // 1 -> 2 -> 4 -> 0 -> null
         if (head ==null){
@@ -116,10 +118,6 @@ class LinkedListImpl<T> : LinkedList<T> {
         }
         head = prev
     }
-
-//    fun <R> filter(predicate: (T) -> T): T{
-//
-//    }
 
     override fun bubbleSort(data: (T) -> Boolean): T?{
         TODO("Not yet implemented")

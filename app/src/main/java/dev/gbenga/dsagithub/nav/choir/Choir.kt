@@ -6,7 +6,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,10 +13,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
+import dev.gbenga.dsa.collections.QueueImpl
 import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
-import dev.gbenga.dsagithub.nav.RouteCache
-import dev.gbenga.dsagithub.nav.Screen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,9 +45,9 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
     val arguments = rememberSaveable { choir.argMap }
 
     LaunchedEffect(Unit) {
-        val cachedRoute = arguments.getOrNull(currentRouteKey?.split(" ")[1])
         choir.restoreRoutes(arguments)
-        println("currentRoute: $cachedRoute - $arguments")
+        val cachedRoute = arguments.getOrNull(currentRouteKey?.split(" ")[1])
+        println("currentRoute: $cachedRoute")
         choir.navigate(cachedRoute ?: initialDestination)
     }
 
@@ -118,12 +116,17 @@ class FlowNavNodeStack(capacity: Int,
     val peekFlow: SharedFlow<NavNode<*>> get() = _sharedFlow.asSharedFlow()
 
     internal val stack = StackImpl<NavNode<*>>(capacity)
+    private val queue = QueueImpl<NavNode<*>>(capacity)
 
-    fun lastOrNull() = stack.peek()
+    fun peekOrNull() = stack.peek()
 
 
     fun silentPush(navNode: NavNode<*>){
         stack.push(navNode.copy(type = NavType.RESTORED))
+    }
+
+    fun clear(){
+        stack.clear()
     }
 
     // Push and notify the state
@@ -132,8 +135,7 @@ class FlowNavNodeStack(capacity: Int,
         println("existingNode: $existingNode")
         ioCoroutine.launch {
             if (existingNode != null){
-                _sharedFlow.emit(navNode.copy(
-                    type = NavType.RESTORED))
+                _sharedFlow.emit(navNode.copy(type = NavType.RESTORED))
             }else{
                 stack.push(navNode)
                 _sharedFlow.emit(navNode.copy(
@@ -167,6 +169,7 @@ class FlowNavNodeStack(capacity: Int,
         ioCoroutine.launch {
             _sharedFlow.emit(navNode.copy(type = NavType.POPPED))
         }
+        println("existingStack: $stack")
     }
 
     fun cancel(){
@@ -179,6 +182,7 @@ class Choir() {
 
     companion object{
         const val INITIAL_ROUTE_CAPACITY = 10
+        const val LOAD_FACTOR = .75
     }
 
     var argMap : CustomMap<String?, Any> = HashMap() // key is object's qualifiedName name
@@ -186,22 +190,30 @@ class Choir() {
     val routes: SharedFlow<NavNode<*>> = _routes.peekFlow
     val registeredRoutes : CustomMap<Any, Any> = HashMap<Any, Any>()
 
-    fun last() = _routes.lastOrNull()
+    fun last() = _routes.peekOrNull()
 
     fun popBackStack(onLast: (() -> Unit)? = null){
-        println("_routes_routes: ${_routes.stack}")
+        val route = _routes.stack.peek()?.key.toString().split(" ")[1]
+        //println("_routes_routes: $route $argMap - ${argMap.getOrNull(route)}")
+        argMap.remove(route)
+        println("popBackStack: $argMap")
         _routes.popNotify(onLast=onLast)
     }
 
     fun restoreRoutes(routes: CustomMap<String?, Any>){
-        routes.keys().forEach { key ->
-            key?.let { // TODO: Works but arrangement is wrong and thus popped the wrong route
+        if (routes.isEmpty())return
+        routes.keys().apply { reverse() }.forEach { key ->
+            key?.let {
                 val klazz = Class.forName(it).kotlin
+                argMap[it] = klazz // Update the argument map
                 _routes.silentPush(NavNode(key = klazz,
                     route=registeredRoutes.getOrNull(klazz)))
+
             }
         }
-        println("restoreRoutes ->${_routes.stack}")
+
+        println("restoreRoutes ->$argMap")
+
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -210,6 +222,7 @@ class Choir() {
 
 
     fun <C: Any> navigate(route: C){
+        // TODO: Maybe use unique keys instead of class names
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
             val navNode = NavNode(route::class, it)

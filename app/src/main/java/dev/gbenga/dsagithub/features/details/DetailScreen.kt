@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -53,6 +55,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.request.maxBitmapSize
 import dev.gbenga.dsagithub.R
 import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.UiState
@@ -129,17 +132,18 @@ fun DetailScreen(navController: Choir,
         val scrollState = rememberScrollState()
 
         ConstraintLayout (modifier = Modifier.padding(paddingValues)
-            .scrollable(scrollState, orientation = Orientation.Vertical)) {
+            .fillMaxSize()
+            .verticalScroll(scrollState)) {
             val (imageBox, listColumn) = createRefs()
             Box(modifier = Modifier.constrainAs(imageBox) {
                 top.linkTo(parent.top)
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
-            }) {
+            }.fillMaxWidth().height(200.dp)) {
 
                 // add image
                 AsyncImage(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                     model = avatarUrl,
                     contentDescription = null,
                     onState = {

@@ -19,6 +19,8 @@ interface Stack<T>: Collections<T>{
     fun isFull(): Boolean
 
     fun toList(): List<T>
+
+    fun clear()
 }
 
 open class StackImpl<T>(private var capacity: Int) : Stack<T> {
@@ -50,6 +52,10 @@ open class StackImpl<T>(private var capacity: Int) : Stack<T> {
             list.add(it)
         }
         return list
+    }
+
+    override fun clear() {
+        linkedList.clear()
     }
 
 

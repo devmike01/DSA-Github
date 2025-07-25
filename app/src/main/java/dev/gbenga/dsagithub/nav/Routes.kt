@@ -4,8 +4,9 @@ import dev.gbenga.dsagithub.features.home.data.User
 import kotlinx.serialization.Serializable
 
 
-@Serializable
-data object Home: Screen
+data object Home: Screen {
+    private fun readResolve(): Any = Home
+}
 
 
 @Serializable
