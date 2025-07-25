@@ -16,6 +16,7 @@ import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.QueueImpl
 import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
+import dev.gbenga.dsagithub.nav.RouteCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,8 +31,8 @@ enum class NavType{
 }
 
 data class NavNode<K>(val key: K?=null,
-                   val route: Any?=null,
-                   val type: NavType = NavType.IDLE)
+                      val route: Any?=null,
+                      val type: NavType = NavType.IDLE)
 
 @Suppress("unchecked_cast")
 @Composable
@@ -42,13 +43,15 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     var currentRoute = remember { mutableStateOf<Any?>(null) }
     var currentRouteKey by rememberSaveable { mutableStateOf<String?>(null) }
-    val arguments = rememberSaveable { choir.argMap }
+    var isInitial by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        choir.restoreRoutes(arguments)
-        val cachedRoute = arguments.getOrNull(currentRouteKey?.split(" ")[1])
-        println("currentRoute: $cachedRoute")
-        choir.navigate(cachedRoute ?: initialDestination)
+        if (isInitial){
+            choir.navigate(initialDestination)
+            isInitial = false
+        }else{
+            choir.restore(routes)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -59,7 +62,7 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
                 NavType.POPPED -> {
                     choir.last()?.let {
                         currentRouteKey = it.key?.toString()
-                        currentRoute.value = it.route // it.key?.toString()
+                        currentRoute.value = it.route
                     }
                 }
                 NavType.ADD, NavType.RESTORED  -> {
@@ -161,8 +164,17 @@ class FlowNavNodeStack(capacity: Int,
 
     // Pop and notify the state
     fun popNotify(onLast: (() -> Unit)? = null,){
+        println("existingStack:: $stack")
         if (stack.size() <= 1){
-            onLast?.invoke()
+            if(onLast == null) {
+                ioCoroutine.launch {
+                    stack.peek()?.copy(type = NavType.POPPED)?.let {
+                        _sharedFlow.emit(it)
+                    }
+                }
+            }else{
+                onLast.invoke()
+            }
             return
         }
         val navNode = stack.pop()
@@ -177,10 +189,13 @@ class FlowNavNodeStack(capacity: Int,
     }
 }
 
-class Choir() {
+
+
+class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = RouteCache.get()) {
 
 
     companion object{
+        const val CACHE_KEY = "Choir.CACHE_KEY"
         const val INITIAL_ROUTE_CAPACITY = 10
         const val LOAD_FACTOR = .75
     }
@@ -192,28 +207,30 @@ class Choir() {
 
     fun last() = _routes.peekOrNull()
 
-    fun popBackStack(onLast: (() -> Unit)? = null){
-        val route = _routes.stack.peek()?.key.toString().split(" ")[1]
-        //println("_routes_routes: $route $argMap - ${argMap.getOrNull(route)}")
-        argMap.remove(route)
-        println("popBackStack: $argMap")
-        _routes.popNotify(onLast=onLast)
-    }
 
-    fun restoreRoutes(routes: CustomMap<String?, Any>){
-        if (routes.isEmpty())return
-        routes.keys().apply { reverse() }.forEach { key ->
-            key?.let {
-                val klazz = Class.forName(it).kotlin
-                argMap[it] = klazz // Update the argument map
-                _routes.silentPush(NavNode(key = klazz,
-                    route=registeredRoutes.getOrNull(klazz)))
-
+    fun restore(routes: CustomMap<Any, Any>){
+        val cachedArgs : CustomMap<String?, Any>? = routeCache.getOrNull(CACHE_KEY)
+        cachedArgs?.keys()?.apply { reverse() }?.forEach { cache ->
+            cachedArgs.getOrNull(cache)?.let { value ->
+                cache?.let {
+                    argMap[cache] = value
+                    val clazz = Class.forName(cache).kotlin
+                    Log.d("popBackStack", "$clazz --- ${routes.getOrNull(clazz)}")
+                    _routes.silentPush(NavNode(key=cache, route = routes.getOrNull(clazz)))
+                }
             }
         }
+        _routes.stack.peek()?.let {
+            _routes.pushNotify(it)
+        }
+    }
 
-        println("restoreRoutes ->$argMap")
-
+    fun popBackStack(onLast: (() -> Unit)? = null){
+        //val route = _routes.stack.peek()?.key.toString().split(" ")[1]
+        //println("_routes_routes: $route $argMap - ${argMap.getOrNull(route)}")
+       // argMap.remove(route)
+        _routes.popNotify(onLast=onLast)
+        println("restoreRoutess ->$argMap")
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -225,6 +242,7 @@ class Choir() {
         // TODO: Maybe use unique keys instead of class names
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
+            routeCache[CACHE_KEY] = argMap
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)
         }

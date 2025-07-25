@@ -71,6 +71,7 @@ class HashMap<K, V> : CustomMap<K, V> {
 
     override fun getOrNull(key: K): V?{
         val index = key.getIndex()
+        if (index !in buckets.indices)return null
         val bucket : LinkedList<Entry<K, V>>?  = buckets[index]
         return bucket?.linearSearch{ it.key == key }?.value
     }

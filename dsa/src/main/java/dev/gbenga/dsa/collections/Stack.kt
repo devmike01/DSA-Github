@@ -56,6 +56,7 @@ open class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
     override fun clear() {
         linkedList.clear()
+        itemCount = 0
     }
 
 
