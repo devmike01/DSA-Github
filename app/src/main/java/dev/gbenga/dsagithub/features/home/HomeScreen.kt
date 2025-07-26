@@ -74,7 +74,6 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 
         val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
         val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
-        var refresh by remember { mutableStateOf(false) }
         var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
 
         val scope = rememberCoroutineScope()
@@ -128,7 +127,6 @@ fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
                 Tab(
                     selected = pagerState.currentPage == selectedPage,
                     onClick = {
-                        Log.d("PrimaryTab", "index $index")
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(index)
                         }

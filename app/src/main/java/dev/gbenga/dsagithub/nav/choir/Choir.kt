@@ -56,8 +56,6 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     LaunchedEffect(Unit) {
         choir.routes.collect { navNode ->
-
-            Log.d("ChoirNavHost", "init route -> ${navNode.key} ${navNode.type}")
             when(navNode.type){
                 NavType.POPPED -> {
                     choir.last()?.let {
@@ -148,20 +146,6 @@ class FlowNavNodeStack(capacity: Int,
 
     }
 
-
-    fun pushAllNotify(navNodeStack: Stack<NavNode<*>>){
-        ioCoroutine.launch {
-            while (navNodeStack.isNotEmpty()){
-                stack.push(navNodeStack.pop().copy(type = NavType.RESTORED))
-            }
-            stack.peek()?.copy(
-                type = NavType.RESTORED)?.let {
-                pushNotify(it)
-            }
-        }
-    }
-
-
     // Pop and notify the state
     fun popNotify(onLast: (() -> Unit)? = null,){
         println("existingStack:: $stack")
@@ -215,22 +199,21 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
                 cache?.let {
                     argMap[cache] = value
                     val clazz = Class.forName(cache).kotlin
-                    Log.d("popBackStack", "$clazz --- ${routes.getOrNull(clazz)}")
                     _routes.silentPush(NavNode(key=cache, route = routes.getOrNull(clazz)))
                 }
             }
         }
-        _routes.stack.peek()?.let {
+        _routes.stack.pop().let {
+            Log.d("popBackStack", "${it.key} - ${it.route}")
             _routes.pushNotify(it)
         }
     }
 
     fun popBackStack(onLast: (() -> Unit)? = null){
-        //val route = _routes.stack.peek()?.key.toString().split(" ")[1]
-        //println("_routes_routes: $route $argMap - ${argMap.getOrNull(route)}")
-       // argMap.remove(route)
+        val route = _routes.stack.peek()?.key.toString()
+        argMap.remove(route)
         _routes.popNotify(onLast=onLast)
-        println("restoreRoutess ->$argMap")
+        routeCache[CACHE_KEY] = argMap
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -239,7 +222,6 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
 
 
     fun <C: Any> navigate(route: C){
-        // TODO: Maybe use unique keys instead of class names
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
             routeCache[CACHE_KEY] = argMap

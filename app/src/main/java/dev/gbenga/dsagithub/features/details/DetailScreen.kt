@@ -37,9 +37,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,8 +81,10 @@ fun DetailScreen(navController: Choir,
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var refresh by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refresh) {
+        if (refresh)return@LaunchedEffect
         detailViewModel.favouriteStatus.collect { status ->
             when(status){
                 is UiState.Success ->{
@@ -94,6 +98,7 @@ fun DetailScreen(navController: Choir,
                 else ->{}
             }
         }
+        refresh = true
     }
 
     LaunchedEffect(Unit) {
@@ -165,18 +170,28 @@ fun DetailScreen(navController: Choir,
                     modifier = Modifier.padding(Dimens.mediumPadding.dp))
                 when(val repos = userRepos.value){
                     is UiState.Success ->{
+                        if (repos.data.isEmpty()){
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Text("User's repository is empty")
+                            }
+                            return@Column
+                        }
                         val userRepos = arrayOfNulls<UserRepositories?>(repos.data.size())
                         var index = 0
                         repos.data.forEach {
                             userRepos[index] = it
                             index++
                         }
+
+                        var initialPage by rememberSaveable { mutableIntStateOf(0) }
+
                         val pagerState = rememberPagerState(pageCount = {
                             userRepos.size
-                        })
+                        }, initialPage = initialPage)
 
                         HorizontalPager(state = pagerState,
                             contentPadding = PaddingValues(end = Dimens.largePadding.dp),) { page ->
+                            initialPage = page
                             RepositoryCard(userRepos[page],
                                 modifier = Modifier)
                         }
