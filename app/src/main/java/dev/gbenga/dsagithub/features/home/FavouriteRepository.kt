@@ -13,20 +13,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-interface HomeRepository {
+interface FavouriteRepository {
     suspend fun getUsers(since: Int? =null): Result<LinkedList<User>>
     suspend fun getUserById(id: String): Result<LinkedList<User>>
     suspend fun addToFavourites(favourite: Favourite): Result<String>
+    suspend fun removeFavourite(username: String): Result<String>
     fun getFavourites(): Flow<LinkedList<Favourite>>
 }
 
-class HomeRepositoryImpl(private val network: NetworkHandler,
-                         val favDatabase: FavouriteDatabase,
-                         val ioScope: CoroutineScope
-): HomeRepository{
+class FavouriteRepositoryImpl(private val network: NetworkHandler,
+                              val favDatabase: FavouriteDatabase,
+                              val ioScope: CoroutineScope
+): FavouriteRepository{
 
     companion object{
-        const val TAG = "HomeRepository"
+        const val TAG = "FavouriteRepository"
     }
 
     override suspend fun getUsers(since: Int?): Result<LinkedList<User>> {
@@ -42,13 +43,25 @@ class HomeRepositoryImpl(private val network: NetworkHandler,
     override suspend fun addToFavourites(favourite: Favourite): Result<String> {
         val deferred = CompletableDeferred<Result<String>>()
         ioScope.launch {
-            favDatabase.setFavourite(favourite).let {
-                deferred.complete(if((it ?: -1) > 0) Result.success("Successfully added to favourite")
-                else Result.failure(Exception("Failed to add to favourite users")))
+            val exists = favDatabase.exists(favourite)
+            if (!exists){
+                favDatabase.setFavourite(favourite).let {
+                    deferred.complete(if((it ?: -1) > 0) Result.success("Successfully added to favourite")
+                    else Result.failure(Exception("Failed to add to favourite users")))
+                }
+            }else{
+                deferred.complete(Result.failure(Exception("Favourite already exist")))
             }
         }
         return deferred.await()
     }
+
+    override suspend fun removeFavourite(username: String): Result<String> {
+        return favDatabase.delete(username)?.let {
+            Result.success("Successfully removed $username from favourite")
+        } ?: Result.failure(Exception("Failed to delete  fa"))
+    }
+
 
     override fun getFavourites(): Flow<LinkedList<Favourite>> {
         val channel = Channel<LinkedList<Favourite>>(Channel.CONFLATED)
@@ -60,5 +73,7 @@ class HomeRepositoryImpl(private val network: NetworkHandler,
         }
         return channel.receiveAsFlow()
     }
+
+
 
 }

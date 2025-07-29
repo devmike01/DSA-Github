@@ -1,6 +1,7 @@
 package dev.gbenga.dsagithub.features.home
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,12 +40,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
+import dev.gbenga.dsagithub.MainActivity
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.FontSize
@@ -65,8 +68,12 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 
     val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
     var showLoading by remember { mutableStateOf(false) }
+    val activity = LocalActivity.current as MainActivity
+    val snackbarHostState = remember { SnackbarHostState() }
+
 
     DefaultScaffold(topBarTitle = "Home",
+        snackbarHostState = snackbarHostState,
         showLoading = showLoading,
         actions = menuItems, onClickMenuItem = {
             homeViewModel.setOnMenuClick(it)
@@ -94,6 +101,9 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
                 is UiState.Loading ->{
                     showLoading = true
                 }
+                else -> {
+                    // Nothing
+                }
             }
         }
 
@@ -104,8 +114,8 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
         }
        HomeContent(usersState, favUsersState.favUsers, onLoadMore = {
            homeViewModel.loadMoreGithubUsers()
-       }){ userName, avatarUrl ->
-         navController.navigate(GithubDetails(userName, avatarUrl))
+       }){ isFavourite,  userName, avatarUrl ->
+         navController.navigate(GithubDetails(userName, avatarUrl,isFavourite))
        }
     }
 }
@@ -114,10 +124,10 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 @Composable
 fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
                 onLoadMore: () -> Unit,
-                onUserClick: (String, String) -> Unit){
+                onUserClick: (Boolean, String, String) -> Unit){
 
     val pagerState = rememberPagerState(pageCount = { 2 })
-    var selectedPage by remember { mutableIntStateOf(0) }
+    var selectedPage by rememberSaveable { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
     Column {
@@ -156,12 +166,12 @@ fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
 }
 
 @Composable
-fun FavoriteScreen(favoriteUsers: LinkedList<Favourite>, onUserClick: (String, String) -> Unit){
+fun FavoriteScreen(favoriteUsers: LinkedList<Favourite>, onUserClick: (Boolean, String, String) -> Unit){
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         favoriteUsers.forEach { favUser ->
             item {
                 HomeItem(favUser.userName, onUserClick = {
-                    onUserClick(favUser.userName, favUser.avatarUrl)
+                    onUserClick(true, favUser.userName, favUser.avatarUrl)
                 })
             }
         }
@@ -173,7 +183,7 @@ private const val buffer = 1
 
 @Composable
 fun HomeUserListView(users: LinkedList<User>,
-                     onUserClick: (String, String) -> Unit,
+                     onUserClick: (Boolean, String, String) -> Unit,
                      onLoadMore: () -> Unit){
     val listState = rememberLazyListState()
 
@@ -196,7 +206,7 @@ fun HomeUserListView(users: LinkedList<User>,
         users.forEach { user ->
             item {
                 HomeItem(user.login, onUserClick ={
-                    onUserClick(user.login, user.avatarUrl)
+                    onUserClick(false, user.login, user.avatarUrl)
                 })
             }
         }
@@ -204,7 +214,7 @@ fun HomeUserListView(users: LinkedList<User>,
 }
 
 @Composable
-private fun LazyItemScope.HomeItem(login: String, onUserClick: (String) -> Unit){
+private fun LazyItemScope.HomeItem( login: String, onUserClick: ( String) -> Unit){
     Row(
         modifier = Modifier.clickable {
             // clicked

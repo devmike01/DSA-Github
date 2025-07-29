@@ -2,8 +2,6 @@ package dev.gbenga.dsagithub.features.details
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,14 +26,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,35 +41,32 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
-import coil3.request.maxBitmapSize
+import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsagithub.MainActivity
 import dev.gbenga.dsagithub.R
+import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.UiState
 import dev.gbenga.dsagithub.base.titleCase
-import dev.gbenga.dsagithub.features.home.data.User
 import dev.gbenga.dsagithub.nav.choir.Choir
 import dev.gbenga.dsagithub.ui.theme.PurpleGrey40
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(navController: Choir,
                  userName: String?,
                  avatarUrl: String?,
+                 isFavourite: Boolean?,
                  detailViewModel: DetailViewModel = koinViewModel()){
 
     val detailsState by detailViewModel.details.collectAsStateWithLifecycle()
@@ -82,20 +75,17 @@ fun DetailScreen(navController: Choir,
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var refresh by rememberSaveable { mutableStateOf(false) }
+    val activity = LocalContext.current.let { it as MainActivity }
 
     LaunchedEffect(refresh) {
         if (refresh)return@LaunchedEffect
-        detailViewModel.favouriteStatus.collect { status ->
-            when(status){
-                is UiState.Success ->{
-                    scope.launch {
-                        snackbarHostState.showSnackbar(status.data)
-                    }
+        detailViewModel.message.collect { status ->
+            if (status.message.isNotEmpty()){
+                scope.launch {
+                    snackbarHostState.showSnackbar(status.message)
                 }
-                is UiState.Error ->{
-                    snackbarHostState.showSnackbar(status.errorMsg)
-                }
-                else ->{}
+            }else if(status.action == MessengerAction.CLOSE_SCREEN){
+                navController.popBackStack()
             }
         }
         refresh = true
@@ -104,109 +94,122 @@ fun DetailScreen(navController: Choir,
     LaunchedEffect(Unit) {
         detailViewModel.populateDetailsTabContent(userName)
     }
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+
+    DefaultScaffold(
+        modifier = Modifier.fillMaxSize(),
+        navigationIcon = {
+            IconButton(onClick = {
+                navController.popBackStack()
+            }) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Go back")
+            }
         },
-        topBar = {
-            TopAppBar(title = {
-                Text(userName?.titleCase() ?: "")
-            },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = null)
-                    }
-                },
-                )
-        },
+        snackbarHostState = snackbarHostState,
+        topBarTitle = userName?.titleCase() ?: "",
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                avatarUrl?.let {
-                    detailViewModel.favoriteUser(userName ?: "", avatarUrl)
+            if(isFavourite == true){
+                FloatingActionButton(onClick = {
+                    avatarUrl?.let {
+                        detailViewModel.unFavoriteUser(userName)
+                    }
+                }) {
+                    Icon(Icons.Default.Close,
+                        contentDescription = "Favorite user")
                 }
-            }) {
-                Icon(Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite user")
+            }else{
+                FloatingActionButton(onClick = {
+                    avatarUrl?.let {
+                        detailViewModel.favoriteUser(userName, avatarUrl)
+                    }
+                }) {
+                    Icon(Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite user")
+                }
             }
+
         }
-    ) { paddingValues ->
-        var loadingImage by remember { mutableStateOf(false) }
-        val scrollState = rememberScrollState()
+    ) {
+        DetailContent(avatarUrl, userName, userRepos)
+    }
+}
 
-        ConstraintLayout (modifier = Modifier.padding(paddingValues)
-            .fillMaxSize()
-            .verticalScroll(scrollState)) {
-            val (imageBox, listColumn) = createRefs()
-            Box(modifier = Modifier.constrainAs(imageBox) {
-                top.linkTo(parent.top)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }.fillMaxWidth().height(200.dp)) {
+@Composable
+fun DetailContent(avatarUrl: String?, userName: String?,
+                  userRepos: State<UiState<LinkedList<UserRepositories>>> ){
+    var loadingImage by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
-                // add image
-                AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
-                    model = avatarUrl,
-                    contentDescription = null,
-                    onState = {
-                        loadingImage = it is AsyncImagePainter.State.Loading
-                    }
-                )
+    ConstraintLayout (modifier = Modifier.fillMaxSize()
+        .verticalScroll(scrollState)) {
+        val (imageBox, listColumn) = createRefs()
+        Box(modifier = Modifier.constrainAs(imageBox) {
+            top.linkTo(parent.top)
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+        }.fillMaxWidth().height(300.dp)) {
 
-                ProgressIndicator(loadingImage)
-            }
+            // add image
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = avatarUrl,
+                contentScale = ContentScale.FillBounds,
+                contentDescription = null,
+                onState = {
+                    loadingImage = it is AsyncImagePainter.State.Loading
+                }
+            )
 
-            Column(modifier = Modifier.constrainAs(listColumn) {
-                top.linkTo(imageBox.bottom)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }) {
+            ProgressIndicator(loadingImage)
+        }
 
-                Text("${userName?.titleCase()}'s Repositories",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(Dimens.mediumPadding.dp))
-                when(val repos = userRepos.value){
-                    is UiState.Success ->{
-                        if (repos.data.isEmpty()){
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Text("User's repository is empty")
-                            }
-                            return@Column
+        Column(modifier = Modifier.constrainAs(listColumn) {
+            top.linkTo(imageBox.bottom)
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+        }) {
+
+            Text("${userName?.titleCase()}'s Repositories",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(Dimens.mediumPadding.dp))
+            when(val repos = userRepos.value){
+                is UiState.Success ->{
+                    if (repos.data.isEmpty()){
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Text("User's repository is empty")
                         }
-                        val userRepos = arrayOfNulls<UserRepositories?>(repos.data.size())
-                        var index = 0
-                        repos.data.forEach {
-                            userRepos[index] = it
-                            index++
-                        }
-
-                        var initialPage by rememberSaveable { mutableIntStateOf(0) }
-
-                        val pagerState = rememberPagerState(pageCount = {
-                            userRepos.size
-                        }, initialPage = initialPage)
-
-                        HorizontalPager(state = pagerState,
-                            contentPadding = PaddingValues(end = Dimens.largePadding.dp),) { page ->
-                            initialPage = page
-                            RepositoryCard(userRepos[page],
-                                modifier = Modifier)
-                        }
+                        return@Column
                     }
-                    is UiState.Error ->{
-                        // error
+                    val userRepos = arrayOfNulls<UserRepositories?>(repos.data.size())
+                    var index = 0
+                    repos.data.forEach {
+                        userRepos[index] = it
+                        index++
                     }
-                    is UiState.Loading ->{
-                        CircularProgressIndicator()
+
+                    var initialPage by rememberSaveable { mutableIntStateOf(0) }
+
+                    val pagerState = rememberPagerState(pageCount = {
+                        userRepos.size
+                    }, initialPage = initialPage)
+
+                    HorizontalPager(state = pagerState,
+                        contentPadding = PaddingValues(end = Dimens.largePadding.dp),) { page ->
+                        initialPage = page
+                        RepositoryCard(userRepos[page],
+                            modifier = Modifier)
                     }
                 }
-                // userRepos
-               // NavigationTabRow()
-
+                is UiState.Loading ->{
+                    CircularProgressIndicator()
+                }
+                else ->{
+                    // Nothing
+                }
             }
+            // userRepos
+            // NavigationTabRow()
+
         }
     }
 }

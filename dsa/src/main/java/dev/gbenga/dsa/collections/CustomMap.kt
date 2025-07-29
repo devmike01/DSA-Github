@@ -24,14 +24,19 @@ interface CustomMap<K, V>: Collections<K>{
     fun clear()
 }
 
-class HashMap<K, V> : CustomMap<K, V> {
+class HashMap<K: Comparable<K>, V: Comparable<V>> : CustomMap<K, V> {
     companion object{
         const val INITIAL_SIZE = 10
         const val LOAD_FACTOR = .75
     }
 
 
-    internal data class Entry <K, V>(val key: K, var value: V): Serializable
+    internal data class Entry<K: Comparable<K>, V: Comparable<V>>(val key: K, var value: V)
+        : Serializable, Comparable<Entry<K, V>> {
+        override fun compareTo(other: Entry<K, V>): Int {
+            return this.key.compareTo(other.key)
+        }
+    }
 
     internal var buckets : Array<LinkedList<Entry<K, V>>?> = arrayOfNulls(INITIAL_SIZE)
 
@@ -41,10 +46,10 @@ class HashMap<K, V> : CustomMap<K, V> {
     override fun put(key: K, value: V): Boolean{
         var index = key.getIndex()
         if (buckets[index] == null){
-            buckets[index] = LinkedListImpl()
+            buckets[index] = LinkedListImpl<Entry<K, V>>()
         }
         val bucket = buckets[index]!!
-        var updated : Boolean = false
+        var updated = false
         bucket.forEach { entry ->
             if (entry.key == key){
                 entry.value = value
@@ -115,7 +120,7 @@ class HashMap<K, V> : CustomMap<K, V> {
     }
 
     fun <K> K.getIndex(): Int{
-        return hashCode().absoluteValue.rem(buckets.size)
+        return hashCode().absoluteValue.rem(buckets.size) // abs value of hashcode % bucket size
     }
 
 

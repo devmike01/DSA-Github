@@ -2,11 +2,9 @@ package dev.gbenga.dsagithub.nav
 
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
-import dev.gbenga.dsa.collections.list.LinkedListImpl
-import dev.gbenga.dsagithub.nav.choir.NavNode
 
 // Fake cache of route
-class RouteCache<V> private constructor() {
+class FakeCache<V> private constructor() {
 
     private val routes : CustomMap<String, V> = HashMap()
 
@@ -15,11 +13,11 @@ class RouteCache<V> private constructor() {
         @Volatile
         private var instance: Any? =null
 
-        fun <T> get(): RouteCache<T>{
-            val routeCache = instance ?: synchronized(this) {
-                instance ?: RouteCache<T>().also { instance = it  }
+        fun <T> get(): FakeCache<T>{
+            val fakeCache = instance ?: synchronized(this) {
+                instance ?: FakeCache<T>().also { instance = it  }
             }
-            return routeCache as RouteCache<T>
+            return fakeCache as FakeCache<T>
         }
     }
 
@@ -32,7 +30,7 @@ class RouteCache<V> private constructor() {
     }
 
     fun dispose(){
-        //routes.clear()
+        routes.clear()
     }
 
 }

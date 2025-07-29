@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 class AppDbHelper(context: Context) : SQLiteOpenHelper(context, DatabaseConfig.DATABASE_NAME, null, DatabaseConfig.DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase?) {
-        db?.execSQL(Queries.SQL_CREATE_ENTRIES)
+        db?.execSQL(FavQueries.SQL_CREATE_ENTRIES)
     }
 
     override fun onUpgrade(
@@ -15,7 +15,7 @@ class AppDbHelper(context: Context) : SQLiteOpenHelper(context, DatabaseConfig.D
         oldVersion: Int,
         newVersion: Int,
     ) {
-        db?.execSQL(Queries.SQL_DELETE_ENTRIES)
+        db?.execSQL(FavQueries.SQL_DELETE_ENTRIES)
         onCreate(db)
     }
 

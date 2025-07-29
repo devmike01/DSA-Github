@@ -2,7 +2,7 @@ package dev.gbenga.dsagithub.data.database
 
 import android.provider.BaseColumns
 
-object Queries {
+object FavQueries {
     const val SQL_CREATE_ENTRIES =
         "CREATE TABLE ${FavouriteContractReader.FavouriteEntry.TABLE_NAME} (" +
                 "${BaseColumns._ID} INTEGER PRIMARY KEY," +
@@ -11,6 +11,8 @@ object Queries {
 
     const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS ${FavouriteContractReader.FavouriteEntry.TABLE_NAME}"
 
+   const val CHECK_EXISTENCE = "SELECT ${FavouriteContractReader.FavouriteEntry.COLUMN_USERNAME} " +
+            "FROM ${FavouriteContractReader.FavouriteEntry.TABLE_NAME} WHERE ${FavouriteContractReader.FavouriteEntry.COLUMN_USERNAME} = ?"
 }
 
 object DatabaseConfig{

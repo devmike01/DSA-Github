@@ -12,6 +12,7 @@ import dev.gbenga.dsagithub.base.MenuIcon
 import dev.gbenga.dsagithub.base.MenuId
 import dev.gbenga.dsagithub.base.MenuItem
 import dev.gbenga.dsagithub.base.UiState
+import dev.gbenga.dsagithub.data.database.Favourite
 import dev.gbenga.dsagithub.features.home.data.User
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val homeRepository: HomeRepository,
+class HomeViewModel(private val favouriteRepository: FavouriteRepository,
                     private val savedState: SavedStateHandle) : AppViewModel() {
 
     private val _action = MutableSharedFlow<HomeUiEvent>()
@@ -52,7 +53,7 @@ class HomeViewModel(private val homeRepository: HomeRepository,
     fun loadMoreGithubUsers(){
         viewModelScope.launch {
             //val last = _homeUiState.value.
-            homeRepository.getUsers(_endQueue.dequeue().also {
+            favouriteRepository.getUsers(_endQueue.dequeue().also {
                 println("_endQueue: $it")
             }).collectResultForUi()
         }
@@ -61,7 +62,7 @@ class HomeViewModel(private val homeRepository: HomeRepository,
     fun loadGithubUsers(){
         if(savedState.get<Boolean>(REFRESH_SCREEN) == null){
             viewModelScope.launch {
-                homeRepository.getUsers().collectResultForUi()
+                favouriteRepository.getUsers().collectResultForUi()
                 savedState[REFRESH_SCREEN] = true
             }
         }
@@ -118,23 +119,60 @@ class HomeViewModel(private val homeRepository: HomeRepository,
     fun loadMenus(){
         _menus.update {
             LinkedListImpl<MenuItem>().apply {
-                prepend(MenuItem(icon = MenuIcon.REVERSE))
-                prepend(MenuItem(icon = MenuIcon.SWAP))
-                prepend(MenuItem(icon = MenuIcon.SORT))
+                prepend(MenuItem(icon = MenuIcon.REVERSE,
+                    id = MenuId.REVERSE))
+                prepend(MenuItem(icon = MenuIcon.SWAP,
+                    id = MenuId.SWAP))
+                prepend(MenuItem(icon = MenuIcon.SORT,
+                    id = MenuId.SORT))
+                prepend(MenuItem(icon = MenuIcon.SORT,
+                    id = MenuId.SEARCH))
             }
         }
     }
 
     fun loadFavourite(){
         viewModelScope.launch {
-            homeRepository.getFavourites().collect { favUsers ->
+            favouriteRepository.getFavourites().collect { favUsers ->
                 Log.d("loadFavourite", "--> MenuItem: $favUsers")
                 _favUserUiState.update { it.copy(favUsers = favUsers) }
             }
         }
     }
 
+    fun reverseUsers(){
+        // New LinkedList has to be created to update the list
+        val userList = LinkedListImpl<User>()
+        _homeUiState.value.users.let { users ->
+            if (users is UiState.Success){
+                users.data.let { userList ->
+                    userList.reverse()
+                    userList
+                }
+            }else{
+                LinkedListImpl()
+            }
+        }.forEach { reversedList ->
+            userList.append(reversedList)
+        }
+
+        _homeUiState.update {
+            it.copy(users = UiState.Success(userList))
+        }
+    }
+
     fun setOnMenuClick(id: MenuId){
-        Log.d("MenuItem", "--> MenuItem: $id")
+        when(id){
+            MenuId.REVERSE -> {
+                Log.d("MenuItem", "--> MenuItem: $id")
+                reverseUsers()
+            }
+            MenuId.SORT -> {}
+            MenuId.SWAP -> {}
+            MenuId.SEARCH -> {
+
+            }
+            else -> {}
+        }
     }
 }

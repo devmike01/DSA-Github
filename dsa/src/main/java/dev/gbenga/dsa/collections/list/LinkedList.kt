@@ -2,8 +2,18 @@ package dev.gbenga.dsa.collections.list
 
 import dev.gbenga.dsa.collections.Collections
 
+
+inline fun <reified T: Comparable<T>> linkedListOf(vararg values: T): LinkedList<T>{
+    val linkedList : LinkedList<T> = LinkedListImpl()
+    values.forEach {
+        linkedList.append(it)
+    }
+    return linkedList
+}
+
 interface LinkedList<T> : Collections<T> {
 
+    fun peekHeadNode(): Node<T>?
     fun peekHead(): T?
     fun removeHead(): T?
     fun append(value: T)
@@ -17,11 +27,14 @@ interface LinkedList<T> : Collections<T> {
     fun clear()
 }
 
-class LinkedListImpl<T> : LinkedList<T> {
+class LinkedListImpl<T: Comparable<T>> : LinkedList<T> {
 
     private var head: Node<T>? = null
 
     private var _size =0
+    override fun peekHeadNode(): Node<T>? {
+        return head
+    }
 
     override fun peekHead(): T? = head?.data
 
@@ -124,7 +137,50 @@ class LinkedListImpl<T> : LinkedList<T> {
     }
 
     override fun insertionSort(){
-        TODO("Not yet implemented")
+        insertionSortString<T>()
+    }
+
+    private fun <T: Comparable<T>> insertionSortString(): Node<T>?{
+        var sorted: Node<T>? = null
+        var current : Node<T>? = head as? Node<T>
+        while (current != null){
+            val next = current.next
+            if (sorted == null || current.data < sorted.data){
+                current.next = sorted
+                sorted = current
+            }else{
+                var temp = sorted
+                while (temp?.next != null && temp.next!!.data < current.data){
+                    temp = temp.next
+                }
+                current.next = temp?.next
+                temp?.next = current
+            }
+            current = next
+        }
+        return sorted
+    }
+
+    private fun insertionSortInt(): Node<Int>?{
+        var sorted: Node<Int>? = null
+        var current: Node<Int>? = head as? Node<Int>
+        while (current != null){
+            val next = current.next
+
+            if (sorted == null || current.data < sorted.data){
+                current.next = sorted
+                sorted = current
+            }else{
+                var temp = sorted
+                while (temp?.next != null && temp.next!!.data < current.data){
+                    temp = temp.next
+                }
+                current.next = temp?.next
+                temp?.next = current
+            }
+            current = next
+        }
+        return sorted
     }
 
 
@@ -199,6 +255,31 @@ class LinkedListImpl<T> : LinkedList<T> {
 
     override fun isNotEmpty(): Boolean {
         return !isEmpty()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if(this === other)return true
+        if (other === null || this !is LinkedList<*>)return false
+        val otherList : LinkedList<*> = other as LinkedList<*>
+        if (this._size != otherList.size()){
+            return false
+        }
+        var current = this.head
+        var otherCurrent = otherList.peekHeadNode()
+        while (current != null && otherCurrent != null){
+            if (otherCurrent.data?.equals(current.data) == false){
+                return false
+            }
+            otherCurrent = otherCurrent.next
+            current = current.next
+        }
+        return current == null && otherCurrent == null
+    }
+
+    override fun hashCode(): Int {
+        var result = 1
+        var current : Node<*>? = head
+        return super.hashCode()
     }
 }
 

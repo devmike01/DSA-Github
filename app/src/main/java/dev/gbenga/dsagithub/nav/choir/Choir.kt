@@ -14,9 +14,8 @@ import androidx.compose.runtime.setValue
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.QueueImpl
-import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
-import dev.gbenga.dsagithub.nav.RouteCache
+import dev.gbenga.dsagithub.nav.FakeCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -175,7 +174,7 @@ class FlowNavNodeStack(capacity: Int,
 
 
 
-class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = RouteCache.get()) {
+class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCache.get()) {
 
 
     companion object{
@@ -193,13 +192,14 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
 
 
     fun restore(routes: CustomMap<Any, Any>){
-        val cachedArgs : CustomMap<String?, Any>? = routeCache.getOrNull(CACHE_KEY)
+        val cachedArgs : CustomMap<String?, Any>? = fakeCache.getOrNull(CACHE_KEY)
         cachedArgs?.keys()?.apply { reverse() }?.forEach { cache ->
             cachedArgs.getOrNull(cache)?.let { value ->
                 cache?.let {
                     argMap[cache] = value
                     val clazz = Class.forName(cache).kotlin
-                    _routes.silentPush(NavNode(key=cache, route = routes.getOrNull(clazz)))
+                    _routes.silentPush(NavNode(key=cache,
+                        route = routes.getOrNull(clazz)))
                 }
             }
         }
@@ -213,7 +213,7 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
         val route = _routes.stack.peek()?.key.toString()
         argMap.remove(route)
         _routes.popNotify(onLast=onLast)
-        routeCache[CACHE_KEY] = argMap
+        fakeCache[CACHE_KEY] = argMap
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -224,7 +224,7 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
     fun <C: Any> navigate(route: C){
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
-            routeCache[CACHE_KEY] = argMap
+            fakeCache[CACHE_KEY] = argMap
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)
         }
@@ -238,13 +238,13 @@ class Choir(private val routeCache : RouteCache<CustomMap<String?, Any>> = Route
         if (registeredRoutes.getOrNull(page) != null){
             return false
         }
-        println("currentRouteNEW: $page")
         return registeredRoutes.put(klass::class, page)
     }
 
 
     fun cancel(){
         _routes.cancel()
+
     }
 
 }

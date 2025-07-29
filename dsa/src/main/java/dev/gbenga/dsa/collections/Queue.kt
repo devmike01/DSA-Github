@@ -15,7 +15,7 @@ interface Queue<T> {
 
 }
 
-class QueueImpl<T>(private val capacity: Int) : Queue<T>{
+class QueueImpl<T: Comparable<T>>(private val capacity: Int) : Queue<T>{
 
     private val linkedList = LinkedListImpl<T>()
 

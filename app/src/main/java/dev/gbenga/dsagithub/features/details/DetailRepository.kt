@@ -6,7 +6,6 @@ import dev.gbenga.dsagithub.network.NetworkHandler
 
 interface DetailRepository{
     suspend fun getUserRepos(user: String): Result<LinkedList<UserRepositories>>
-
     suspend fun getUserRepoById(user: String, nodeId: String): Result<UserRepositories>
 }
 
@@ -23,6 +22,7 @@ class DetailRepositoryImpl(val networkHandler: NetworkHandler): DetailRepository
             }
         }
     }
+
 
     override suspend fun getUserRepoById(
         user: String,

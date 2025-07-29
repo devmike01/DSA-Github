@@ -2,7 +2,7 @@ package dev.gbenga.dsa.collections.list
 
 import java.io.Serializable
 
-data class Node<T>(val data: T): Serializable {
+data class Node<T>(var data: T): Serializable {
 
 
     var next: Node<T>? = null
