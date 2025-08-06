@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
@@ -19,12 +22,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
@@ -37,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.Node
@@ -53,40 +62,19 @@ import dev.gbenga.dsagithub.ui.theme.Orange
 @Composable
 fun DefaultScaffold(
     modifier: Modifier = Modifier,
-    topBarTitle: String,
     navigationIcon: @Composable () -> Unit = {},
-                    snackbarHostState: SnackbarHostState? =null,
-                    showLoading: Boolean =false,
-                    floatingActionButton: @Composable () -> Unit = {},
-                    actions: LinkedList<MenuItem>? = null,
-                    onClickMenuItem: ((MenuId) -> Unit)? = null,
-                    content: @Composable () -> Unit){
+    snackbarHostState: SnackbarHostState? =null,
+    showLoading: Boolean =false,
+    topBarTitle: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    actions: LinkedList<MenuItem>? = null,
+    onClickMenuItem: ((MenuId) -> Unit)? = null,
+    content: @Composable () -> Unit){
     Scaffold(
         floatingActionButton =floatingActionButton,
 
         topBar = {
-            val textFieldState by remember{ mutableStateOf(TextFieldState()) }
-            TopAppBar(title = {
-                ConstraintLayout {
-                    val (search, title) = createRefs()
-                    Text(topBarTitle,
-                        modifier= Modifier.constrainAs(search){
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                        bottom.linkTo(parent.bottom)
-                    })
-                    SimpleSearchBar(
-                        modifier= Modifier.constrainAs(search){
-                            top.linkTo(parent.top)
-                            start.linkTo(title.end)
-                            bottom.linkTo(parent.bottom)
-                        },
-                        textFieldState = textFieldState
-                    ){
-
-                    }
-                }
-            }, //containerColor = Color.Blue
+            TopAppBar(title = topBarTitle, //containerColor = Color.Blue
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Orange
                 ),
@@ -95,15 +83,18 @@ fun DefaultScaffold(
                     var menuNode : Node<MenuItem>? = actions?.peekHeadNode()
                     while (menuNode != null){
                         val menu = menuNode.data
-                        IconButton(onClick = {
-                            Log.d("TopAppBar", "${menu.id}")
-                            onClickMenuItem?.invoke(menu.id)
-                        }) {
-                            Icon(painter = painterResource(menu.icon.useIcon()),
-                                tint = Color.White ,
-                                contentDescription = null,
-                                modifier = Modifier.size(30.dp))
+                        if (!menu.hide){
+                            IconButton(onClick = {
+                                Log.d("TopAppBar", "${menu.id}")
+                                onClickMenuItem?.invoke(menu.id)
+                            }) {
+                                Icon(painter = painterResource(menu.icon.useIcon()),
+                                    tint = Color.White ,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp))
+                            }
                         }
+
                         menuNode = menuNode.next
                     }
             },
@@ -128,49 +119,6 @@ fun DefaultScaffold(
     }
 }
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SimpleSearchBar(
-    modifier: Modifier = Modifier,
-    textFieldState: TextFieldState,
-    onSearch: (String) -> Unit,
-) {
-    // Controls expansion state of the search bar
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-    Box(
-        modifier
-            .fillMaxSize()
-            .semantics { isTraversalGroup = true }
-    ) {
-        SearchBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .semantics { traversalIndex = 0f }
-                .clip(RoundedCornerShape(10.dp))
-                .height(Dimens.searchBoxHeight.dp),
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = textFieldState.text.toString(),
-                    onQueryChange = { textFieldState.edit { replace(0, length, it) } },
-                    onSearch = {
-                        onSearch(textFieldState.text.toString())
-                        expanded = false
-                    },
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
-                    placeholder = { Text("Search") }
-                )
-            },
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-        ) {
-
-        }
-    }
-}
 
 /*
 [1,1,2,1]
