@@ -3,7 +3,7 @@ package dev.gbenga.dsa.collections.list
 import dev.gbenga.dsa.collections.Collections
 
 
-inline fun <reified T: Comparable<T>> linkedListOf(vararg values: T): LinkedList<T>{
+inline fun <reified T> linkedListOf(vararg values: T): LinkedList<T>{
     val linkedList : LinkedList<T> = LinkedListImpl()
     values.forEach {
         linkedList.append(it)
@@ -27,7 +27,7 @@ interface LinkedList<T> : Collections<T> {
     fun clear()
 }
 
-class LinkedListImpl<T: Comparable<T>> : LinkedList<T> {
+class LinkedListImpl<T> : LinkedList<T> {
 
     private var head: Node<T>? = null
 
@@ -45,6 +45,11 @@ class LinkedListImpl<T: Comparable<T>> : LinkedList<T> {
         head = head?.next
         return removed?.data?.also {
             _size --
+        }
+
+        val mList = mutableListOf<Int>()
+        for (v in listOf<Int>()){
+
         }
     }
 
@@ -117,7 +122,6 @@ class LinkedListImpl<T: Comparable<T>> : LinkedList<T> {
 
 
     override fun reverse(){
-        // 1 -> 2 -> 4 -> 0 -> null
         if (head ==null){
             return
         }
@@ -137,7 +141,7 @@ class LinkedListImpl<T: Comparable<T>> : LinkedList<T> {
     }
 
     override fun insertionSort(){
-        insertionSortString<T>()
+      //  insertionSortString<T>()
     }
 
     private fun <T: Comparable<T>> insertionSortString(): Node<T>?{

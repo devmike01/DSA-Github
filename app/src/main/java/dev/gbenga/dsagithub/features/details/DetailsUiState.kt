@@ -17,4 +17,8 @@ data class DetailMessenger(val message: String="",
 
 data class TabContent(val tab: String="",
                       val content: LinkedList<TabContent> = LinkedListImpl()
-)
+): Comparable<TabContent> {
+    override fun compareTo(other: TabContent): Int {
+        return this.tab.compareTo(other.tab)
+    }
+}

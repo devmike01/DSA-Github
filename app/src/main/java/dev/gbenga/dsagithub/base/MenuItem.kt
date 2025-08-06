@@ -4,7 +4,11 @@ import dev.gbenga.dsagithub.R
 
 
 data class MenuItem (val icon: MenuIcon = MenuIcon.NONE,
-                     val id: MenuId = MenuId.NONE)
+                     val id: MenuId = MenuId.NONE): Comparable<MenuItem> {
+    override fun compareTo(other: MenuItem): Int {
+        return this.id.compareTo(other.id)
+    }
+}
 
 enum class MenuIcon {
     REVERSE, SORT, SWAP, SEARCH, NONE

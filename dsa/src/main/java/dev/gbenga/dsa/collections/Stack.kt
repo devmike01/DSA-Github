@@ -23,7 +23,7 @@ interface Stack<T>: Collections<T>{
     fun clear()
 }
 
-open class StackImpl<T: Comparable<T>>(private var capacity: Int) : Stack<T> {
+open class StackImpl<T>(private var capacity: Int) : Stack<T> {
 
     private var linkedList = LinkedListImpl<T>()
 

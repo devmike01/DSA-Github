@@ -2,14 +2,13 @@ package dev.gbenga.dsa.collections
 
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
-import java.io.Serializable
 import kotlin.math.absoluteValue
 
-interface CustomMap<K, V>: Collections<K>{
-
-    fun put(key: K, value: V): Boolean
+interface CustomMap<K, V>{
 
     operator fun set(key: K, value: V)
+
+    fun put(key: K, value: V): Boolean
 
     fun getOrNull(key: K): V?
 
@@ -21,26 +20,35 @@ interface CustomMap<K, V>: Collections<K>{
 
     val size : Int
 
+    fun isEmpty(): Boolean
+
+    fun isNotEmpty(): Boolean
+
+    fun bubbleSort(predicate: (K) -> Boolean): V?
+
+    fun linearSearch(predicate: (K) -> Boolean): V?
+
+    fun remove(predicate: (K?) -> Boolean): Boolean
+
     fun clear()
 }
 
-class HashMap<K: Comparable<K>, V: Comparable<V>> : CustomMap<K, V> {
+class HashMap<K, V> : CustomMap<K, V> {
     companion object{
         const val INITIAL_SIZE = 10
         const val LOAD_FACTOR = .75
     }
 
 
-    internal data class Entry<K: Comparable<K>, V: Comparable<V>>(val key: K, var value: V)
-        : Serializable, Comparable<Entry<K, V>> {
-        override fun compareTo(other: Entry<K, V>): Int {
-            return this.key.compareTo(other.key)
-        }
-    }
+    internal data class Entry <K, V>(val key: K, var value: V)
 
     internal var buckets : Array<LinkedList<Entry<K, V>>?> = arrayOfNulls(INITIAL_SIZE)
 
     override var size = 0
+    override fun clear() {
+        buckets = arrayOfNulls(0)
+        size = buckets.size
+    }
 
 
     override fun put(key: K, value: V): Boolean{
@@ -120,13 +128,7 @@ class HashMap<K: Comparable<K>, V: Comparable<V>> : CustomMap<K, V> {
     }
 
     fun <K> K.getIndex(): Int{
-        return hashCode().absoluteValue.rem(buckets.size) // abs value of hashcode % bucket size
-    }
-
-
-    override fun clear() {
-        buckets = arrayOfNulls(0)
-        size = 0
+        return hashCode().absoluteValue.rem(buckets.size)
     }
 
     override fun toString(): String {
@@ -148,17 +150,28 @@ class HashMap<K: Comparable<K>, V: Comparable<V>> : CustomMap<K, V> {
        return !isEmpty()
     }
 
-    override fun bubbleSort(predicate: (K) -> Boolean): K? {
+    override fun bubbleSort(predicate: (K) -> Boolean): V? {
         TODO("Not yet implemented")
     }
 
-    override fun linearSearch(predicate: (K) -> Boolean): K? {
-        TODO("Not yet implemented")
+    override fun linearSearch(predicate: (K) -> Boolean): V? {
+        for (bucket in buckets){
+            var item = bucket?.peekHeadNode()
+            while (item != null){
+                if (predicate.invoke(item.data.key)){
+                    return item.data.value
+                }
+                item = item.next
+            }
+
+        }
+        return null
     }
 
     override fun remove(predicate: (K?) -> Boolean): Boolean {
-        TODO("Not yet implemented")
+        val bucket = buckets[getIndex()]
+        return bucket?.remove{
+            predicate.invoke(it?.key)
+        } == true
     }
-
-
 }

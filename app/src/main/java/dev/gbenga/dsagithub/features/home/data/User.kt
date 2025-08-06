@@ -61,4 +61,8 @@ data class User(
 
     @SerializedName("site_admin")
     val siteAdmin: Boolean
-)
+): Comparable<User> {
+    override fun compareTo(other: User): Int {
+        return this.id.compareTo(other.id)
+    }
+}

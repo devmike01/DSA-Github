@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import dev.gbenga.dsa.collections.CustomMap
 import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.QueueImpl
+import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
 import dev.gbenga.dsagithub.nav.FakeCache
 import kotlinx.coroutines.CoroutineScope
@@ -24,14 +25,22 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 enum class NavType{
     POPPED, ADD, IDLE, RESTORED
 }
 
-data class NavNode<K>(val key: K?=null,
-                      val route: Any?=null,
-                      val type: NavType = NavType.IDLE)
+data class NavNode(
+    val key: KClass<out Any>,
+    val route: Any? =null,
+    val type: NavType = NavType.IDLE): Comparable< NavNode>{
+    override fun compareTo(other: NavNode): Int {
+        return this.compareTo(other)
+    }
+
+
+}
 
 @Suppress("unchecked_cast")
 @Composable
@@ -55,16 +64,19 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     LaunchedEffect(Unit) {
         choir.routes.collect { navNode ->
-            when(navNode.type){
+            val type = (navNode as NavNode).type
+
+            when(type){
                 NavType.POPPED -> {
-                    choir.last()?.let {
-                        currentRouteKey = it.key?.toString()
+                    val last = (choir.last() as? NavNode)
+                    last?.let {
+                        currentRouteKey = it.key.toString()
                         currentRoute.value = it.route
                     }
                 }
                 NavType.ADD, NavType.RESTORED  -> {
                     currentRoute.value =  navNode.route
-                    currentRouteKey = navNode.key?.toString()
+                    currentRouteKey = navNode.key.toString()
                 }
                 else ->{
                     Log.d("ChoirNavHost", "init route")
@@ -109,19 +121,19 @@ inline fun <reified T: Any> Choir.singNav(noinline route: @Composable () -> Any)
 
 
 
-class FlowNavNodeStack(capacity: Int,
+class FlowNavNodeStack<K: Comparable<K>>(capacity: Int,
                        val ioCoroutine: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)) {
 
-    private val _sharedFlow = MutableSharedFlow<NavNode<*>>(replay = 1)
-    val peekFlow: SharedFlow<NavNode<*>> get() = _sharedFlow.asSharedFlow()
+    private val _sharedFlow = MutableSharedFlow<NavNode>(replay = 1)
+    val peekFlow: SharedFlow<NavNode> get() = _sharedFlow.asSharedFlow()
 
-    internal val stack = StackImpl<NavNode<*>>(capacity)
-    private val queue = QueueImpl<NavNode<*>>(capacity)
+    internal val stack : Stack<NavNode> = StackImpl<NavNode>(capacity)
+    private val queue = QueueImpl<NavNode>(capacity)
 
     fun peekOrNull() = stack.peek()
 
 
-    fun silentPush(navNode: NavNode<*>){
+    fun silentPush(navNode: NavNode){
         stack.push(navNode.copy(type = NavType.RESTORED))
     }
 
@@ -130,7 +142,7 @@ class FlowNavNodeStack(capacity: Int,
     }
 
     // Push and notify the state
-    fun pushNotify(navNode: NavNode<*>){
+    fun pushNotify(navNode: NavNode){
         val existingNode = stack.linearSearch { it.key == navNode.key }
         println("existingNode: $existingNode")
         ioCoroutine.launch {
@@ -184,9 +196,9 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
     }
 
     var argMap : CustomMap<String?, Any> = HashMap() // key is object's qualifiedName name
-    private val _routes : FlowNavNodeStack = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
-    val routes: SharedFlow<NavNode<*>> = _routes.peekFlow
-    val registeredRoutes : CustomMap<Any, Any> = HashMap<Any, Any>()
+    private val _routes : FlowNavNodeStack<String> = FlowNavNodeStack(INITIAL_ROUTE_CAPACITY)
+    val routes: SharedFlow<NavNode> = _routes.peekFlow
+    val registeredRoutes : CustomMap<Any, Any> = HashMap()
 
     fun last() = _routes.peekOrNull()
 
@@ -195,16 +207,16 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
         val cachedArgs : CustomMap<String?, Any>? = fakeCache.getOrNull(CACHE_KEY)
         cachedArgs?.keys()?.apply { reverse() }?.forEach { cache ->
             cachedArgs.getOrNull(cache)?.let { value ->
-                cache?.let {
-                    argMap[cache] = value
-                    val clazz = Class.forName(cache).kotlin
-                    _routes.silentPush(NavNode(key=cache,
+                cache?.let { key ->
+                    argMap[key] = value
+                    val clazz = Class.forName(key).kotlin
+                    _routes.silentPush(NavNode(
+                        key = clazz,
                         route = routes.getOrNull(clazz)))
                 }
             }
         }
         _routes.stack.pop().let {
-            Log.d("popBackStack", "${it.key} - ${it.route}")
             _routes.pushNotify(it)
         }
     }
@@ -221,7 +233,7 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
     }
 
 
-    fun <C: Any> navigate(route: C){
+    fun navigate(route: Any){
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
             fakeCache[CACHE_KEY] = argMap
@@ -235,7 +247,7 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
      * @param page is a composable screen
      **/
     inline fun <reified klass: Any> putRoute(page: Any): Boolean{
-        if (registeredRoutes.getOrNull(page) != null){
+        if (registeredRoutes.getOrNull(klass::class) != null){
             return false
         }
         return registeredRoutes.put(klass::class, page)
