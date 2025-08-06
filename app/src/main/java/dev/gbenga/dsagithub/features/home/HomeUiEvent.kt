@@ -1,3 +1,6 @@
 package dev.gbenga.dsagithub.features.home
 
-data class HomeUiEvent(val reload: Boolean)
+import dev.gbenga.dsagithub.base.MenuId
+
+data class HomeUiEvent(val reload: Boolean= false,
+                       val menuAction: MenuId = MenuId.NONE)
