@@ -106,7 +106,9 @@ fun DetailScreen(navController: Choir,
             }
         },
         snackbarHostState = snackbarHostState,
-        topBarTitle = userName?.titleCase() ?: "",
+        topBarTitle = {
+            Text(userName?.titleCase() ?: "")
+        },
         floatingActionButton = {
             if(isFavourite == true){
                 FloatingActionButton(onClick = {
