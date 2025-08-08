@@ -20,10 +20,14 @@ interface LinkedList<T> : Collections<T> {
     fun lastOrNull(): T?
     fun prepend(value: T)
     fun insertionSort()
-    fun swap(x: T, y: T)
+    fun swap(x: T?, y: T?)
     fun forEach(block: (T) -> Unit)
     fun size(): Int
     fun reverse()
+    fun bubbleSort(predicate: (Node<T>) -> Boolean) : Node<T>?
+    fun bubbleSort(): Node<T>?
+    fun linearSearch(): Node<T>?
+    fun <R> map(onMap: (T) -> R): LinkedList<R>
     fun clear()
 }
 
@@ -47,10 +51,7 @@ class LinkedListImpl<T> : LinkedList<T> {
             _size --
         }
 
-        val mList = mutableListOf<Int>()
-        for (v in listOf<Int>()){
 
-        }
     }
 
     override fun append(value: T){
@@ -136,8 +137,88 @@ class LinkedListImpl<T> : LinkedList<T> {
         head = prev
     }
 
-    override fun bubbleSort(data: (T) -> Boolean): T?{
+    override fun bubbleSort(): Node<T>?{
+        if (head ==null || null == head?.next) return head
+        var swapped: Boolean = false
+
+        when(head?.data){
+            is Int -> {
+                do {
+                    var intCurrent = head as? Node<Int>
+                    swapped = false
+                    while (intCurrent?.next != null){
+                        if (intCurrent.data > intCurrent.next!!.data){
+                            val temp = intCurrent.data
+                            intCurrent.data = intCurrent.next!!.data
+                            intCurrent.next?.data = temp
+                            swapped = true
+                        }
+                        intCurrent = intCurrent.next
+                    }
+                }while (swapped)
+
+            }
+            is String -> {
+                do {
+                    var strCurrent = head as? Node<String>
+                    swapped = false
+                    while (strCurrent?.next != null){
+                        if (strCurrent.data.lowercase() > strCurrent.next!!.data.lowercase()){
+                            val temp = strCurrent.data
+                            strCurrent.data = strCurrent.next!!.data
+                            strCurrent.next!!.data = temp
+                            swapped = true
+                        }
+                        strCurrent = strCurrent.next
+                    }
+                }while (swapped)
+            }
+            else -> {
+                throw UnsupportedOperationException("Type ${head?.data} is not supported. Supported types: {str, int}")
+            }
+        }
+        return head
+    }
+
+
+
+    internal fun bubbleSortWithPrediction(prediction: (node: Node<T>) -> Boolean): Node<T>?{
+        if (head == null || head?.next == null)return null
+
+        var swapped: Boolean // = false
+        do {
+            var cur: Node<T>? = head
+            swapped = false
+            while (cur?.next != null){
+                if (prediction(cur)){
+                    val temp = cur.data
+                    cur.data = cur.next!!.data
+                    cur.next?.data = temp!!
+                    swapped = true
+                }
+                cur = cur.next
+            }
+        }while (swapped)
+        return head
+    }
+
+    override fun linearSearch(): Node<T>? {
         TODO("Not yet implemented")
+    }
+
+    override fun <R> map(transform: (T) -> R): LinkedList<R> {
+        val linkedList = LinkedListImpl<R>()
+        var curr : Node<T>? = head
+        while (curr != null){
+            linkedList.append(transform(curr.data))
+            curr = curr.next
+        }
+        return linkedList
+    }
+
+
+    override fun bubbleSort(predicate: (Node<T>) -> Boolean): Node<T>?{
+        return bubbleSortWithPrediction(predicate)
     }
 
     override fun insertionSort(){
@@ -198,7 +279,8 @@ class LinkedListImpl<T> : LinkedList<T> {
         return curr?.data
     }
 
-    override fun swap(x: T, y: T){
+    override fun swap(x: T?, y: T?){
+        if (y == null || null == x )return
         if (x == y)return
 
         var prevX : Node<T>? = null

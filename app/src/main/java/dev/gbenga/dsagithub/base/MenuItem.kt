@@ -12,19 +12,20 @@ data class MenuItem (val icon: MenuIcon = MenuIcon.NONE,
 }
 
 enum class MenuIcon {
-    REVERSE, SORT, SWAP, SEARCH, NONE
+    REVERSE, SORT, SWAP, SEARCH, NONE, CANCEL
 }
 
 enum class MenuId{
-    REVERSE, SORT, SWAP, SEARCH, NONE, RESET
+    REVERSE, SORT, SWAP, SEARCH, NONE, RESET, CANCEL
 }
 
 fun MenuIcon.useIcon(): Int{
     return when (this) {
-        MenuIcon.SORT -> android.R.drawable.ic_menu_sort_alphabetically
+        MenuIcon.SORT -> R.drawable.sorting
         MenuIcon.SWAP -> android.R.drawable.ic_menu_set_as
-        MenuIcon.REVERSE -> android.R.drawable.ic_menu_revert
-        MenuIcon.SEARCH -> android.R.drawable.ic_menu_search
+        MenuIcon.REVERSE -> R.drawable.reverse
+        MenuIcon.SEARCH -> R.drawable.search
+        MenuIcon.CANCEL -> R.drawable.cancel
         else -> -1
     }
 }

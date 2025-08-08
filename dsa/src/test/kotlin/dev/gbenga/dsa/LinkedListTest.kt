@@ -7,7 +7,9 @@ import dev.gbenga.dsa.collections.list.linkedListOf
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.lang.UnsupportedOperationException
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -46,7 +48,9 @@ class LinkedListTest {
         linkedList.append("Judas")
         linkedList.append("James")
         linkedList.append("Judea")
+        assertTrue(linkedList == linkedListOf("John","Judas", "James", "Judea"))
         linkedList.remove { it == "Judea" }
+        assertTrue(linkedList == linkedListOf("John","Judas", "James"))
     }
 
     @Test
@@ -57,36 +61,32 @@ class LinkedListTest {
         assertTrue(linkedList == linkedListOf(0,3,1,10,2))
     }
 
-    @Test
-    fun testInsertionSort(){
-        val linkedList = LinkedListImpl<Int>()
-        linkedList.append(2)
-        linkedList.append(10)
-        linkedList.append(1)
-        linkedList.append(3)
+//    @Test
+//    fun testInsertionSort(){
+//        val linkedList = LinkedListImpl<Int>()
+//        linkedList.append(2)
+//        linkedList.append(10)
+//        linkedList.append(1)
+//        linkedList.append(3)
+//        // Todo: implement insertion sort later to test
+//    }
+//
+//
 
+    @Test(expected = UnsupportedOperationException::class)
+    fun testSortUnSupported(){
+        val unSupportedTypes = linkedListOf(Any(), Any())
+        unSupportedTypes.bubbleSort()
     }
 
-
     @Test
-    fun sampleBubbleSort(){
-        val list = mutableListOf<Int>()
-        list.add(2)
-        list.add(32)
-        list.add(22)
-        list.add(0)
-        list.add(3)
-        list.add(1)
-
-        for (i in 0 until list.size){
-            for (x in 0 until list.size){
-                if (list[i] < list[x]){
-                    val temp = list[i]
-                    list[i] = list[x]
-                    list[x] = temp
-                }
-            }
-        }
+    fun testBubbleSort(){
+        val intList = linkedListOf(2,1,5,0,10, 3, -1)
+        intList.bubbleSort()
+        val strList = linkedListOf("Mango", "Orange", "Apple", "Imbu")
+        strList.bubbleSort()
+        assertTrue(intList == linkedListOf(-1, 0,1,2,3,5,10))
+        assertTrue(strList == linkedListOf("Apple", "Imbu","Mango", "Orange"))
     }
 
 

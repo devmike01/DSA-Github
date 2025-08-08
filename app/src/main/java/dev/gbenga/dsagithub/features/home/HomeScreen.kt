@@ -2,6 +2,7 @@ package dev.gbenga.dsagithub.features.home
 
 import android.util.Log
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,14 +12,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +33,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,8 +45,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +60,8 @@ import dev.gbenga.dsagithub.MainActivity
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
 import dev.gbenga.dsagithub.base.FontSize
+import dev.gbenga.dsagithub.base.MenuId
+import dev.gbenga.dsagithub.base.MenuItem
 import dev.gbenga.dsagithub.base.UiState
 import dev.gbenga.dsagithub.base.initial
 import dev.gbenga.dsagithub.base.titleCase
@@ -66,25 +77,57 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewModel()){
 
-    val menuItems by homeViewModel.menus.collectAsStateWithLifecycle()
+    val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
+    val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
+    var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
     var showLoading by remember { mutableStateOf(false) }
-    val activity = LocalActivity.current as MainActivity
     val snackbarHostState = remember { SnackbarHostState() }
+    var searchTextValue by rememberSaveable { mutableStateOf("") }
+    var menuItems by remember { mutableStateOf<LinkedList<MenuItem>>(LinkedListImpl<MenuItem>()) }
+    var refresh by rememberSaveable { mutableStateOf(false) }
 
 
-    DefaultScaffold(topBarTitle = "Home",
+    DefaultScaffold(topBarTitle = {
+
+        SimpleSearchBar(textValue = searchTextValue,
+            expand = homeViewModel.getExpandSearch()) {
+            searchTextValue = it
+        }
+    },
         snackbarHostState = snackbarHostState,
         showLoading = showLoading,
         actions = menuItems, onClickMenuItem = {
             homeViewModel.setOnMenuClick(it)
         }) {
 
-        val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
-        val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
-        var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
 
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+
+            Log.d("menuItems", "expandSe: -> $refresh")
+            homeViewModel.menus.collect {
+                menuItems = it
+                refresh = true
+            }
+
+        }
+
+        LaunchedEffect(Unit) {
+            homeViewModel.action.collect {
+                when( it.menuAction){
+                    MenuId.SEARCH -> {
+                        Log.d("expandSearch", "expandSearch:--: -> ${it.menuAction}")
+                       // expandSearch = !expandSearch
+                        homeViewModel.setExpandSearch()
+                    }
+                    else ->{
+                        return@collect
+                    }
+                }
+            }
+        }
 
         LaunchedEffect(homeUiState.users) {
             when(val users = homeUiState.users){
@@ -107,6 +150,7 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
             }
         }
 
+
         LaunchedEffect(Unit) {
             homeViewModel.loadMenus()
             homeViewModel.loadGithubUsers()
@@ -118,6 +162,54 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
          navController.navigate(GithubDetails(userName, avatarUrl,isFavourite))
        }
     }
+}
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleSearchBar(
+    modifier: Modifier = Modifier,
+    textValue: String,
+    expand: Boolean= false,
+    onSearch: (String) -> Unit,
+) {
+    var focusChanged by rememberSaveable { mutableStateOf(false) }
+    val textStyle = MaterialTheme.typography.bodySmall
+    AnimatedVisibility(expand) {
+        BasicTextField(
+            value = textValue,
+            onValueChange = {
+                //textValue = it
+                onSearch(it)
+            },
+            maxLines = 1,
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier
+                        .padding(Dimens.normalPadding.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    innerTextField()
+                }
+            },
+            textStyle = textStyle,
+            modifier = modifier
+                .padding(5.dp)
+                .background(Color.LightGray)
+                .fillMaxWidth()
+                .semantics { isTraversalGroup = true }
+                .semantics { traversalIndex = 0f }
+                .wrapContentHeight()
+                .onFocusChanged{
+                    focusChanged = it.hasFocus
+                }
+        )
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -179,8 +271,6 @@ fun FavoriteScreen(favoriteUsers: LinkedList<Favourite>, onUserClick: (Boolean, 
 }
 
 
-private const val buffer = 1
-
 @Composable
 fun HomeUserListView(users: LinkedList<User>,
                      onUserClick: (Boolean, String, String) -> Unit,
@@ -191,7 +281,7 @@ fun HomeUserListView(users: LinkedList<User>,
     val reachedBottom: Boolean by remember {
         derivedStateOf {
             val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            lastVisibleItem?.index != 0 && lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - buffer
+            lastVisibleItem?.index != 0 && lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - 1
         }
     }
 

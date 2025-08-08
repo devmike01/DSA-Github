@@ -186,7 +186,7 @@ class FlowNavNodeStack<K: Comparable<K>>(capacity: Int,
 
 
 
-class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCache.get()) {
+class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCache.getInstance()) {
 
 
     companion object{

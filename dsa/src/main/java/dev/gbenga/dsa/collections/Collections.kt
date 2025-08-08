@@ -8,8 +8,7 @@ interface Collections<T>  : Serializable {
 
     fun isNotEmpty(): Boolean
 
-    fun bubbleSort(predicate: (T) -> Boolean): T?
-
+    @Deprecated("To be removed", replaceWith = ReplaceWith("individual data structure's linearSearch"))
     fun linearSearch(predicate: (T) -> Boolean): T?
 
     fun remove(predicate: (T?) -> Boolean): Boolean

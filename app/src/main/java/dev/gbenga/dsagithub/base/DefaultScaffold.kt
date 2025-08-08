@@ -85,13 +85,12 @@ fun DefaultScaffold(
                         val menu = menuNode.data
                         if (!menu.hide){
                             IconButton(onClick = {
-                                Log.d("TopAppBar", "${menu.id}")
                                 onClickMenuItem?.invoke(menu.id)
                             }) {
                                 Icon(painter = painterResource(menu.icon.useIcon()),
                                     tint = Color.White ,
                                     contentDescription = null,
-                                    modifier = Modifier.size(30.dp))
+                                    modifier = Modifier.size(25.dp))
                             }
                         }
 

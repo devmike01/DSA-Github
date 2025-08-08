@@ -76,8 +76,6 @@ open class StackImpl<T>(private var capacity: Int) : Stack<T> {
         return !isEmpty()
     }
 
-    override fun bubbleSort(predicate: (T) -> Boolean): T? = linkedList.bubbleSort(predicate)
-
     override fun linearSearch(predicate: (T) -> Boolean): T? {
         return linkedList.linearSearch (predicate)
     }
