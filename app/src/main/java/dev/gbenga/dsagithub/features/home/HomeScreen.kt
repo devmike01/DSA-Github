@@ -82,7 +82,7 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
     var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
     var showLoading by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-    var searchTextValue by rememberSaveable { mutableStateOf("") }
+    var searchTextValue by remember { mutableStateOf(homeViewModel.getSearchQuery()) }
     var menuItems by remember { mutableStateOf<LinkedList<MenuItem>>(LinkedListImpl<MenuItem>()) }
     var refresh by rememberSaveable { mutableStateOf(false) }
 
@@ -92,6 +92,7 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
         SimpleSearchBar(textValue = searchTextValue,
             expand = homeViewModel.getExpandSearch()) {
             searchTextValue = it
+            homeViewModel.searchUsers(it)
         }
     },
         snackbarHostState = snackbarHostState,

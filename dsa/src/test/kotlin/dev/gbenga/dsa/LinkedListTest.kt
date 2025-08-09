@@ -89,6 +89,15 @@ class LinkedListTest {
         assertTrue(strList == linkedListOf("Apple", "Imbu","Mango", "Orange"))
     }
 
+    @Test
+    fun testLinearSearch(){
+        val intList = linkedListOf(2,1,5,0,10, 3, -1)
+        val strList = linkedListOf("A", "B", "C")
+        assertEquals(intList.linearSearch(4)?.data, null)
+        assertEquals(intList.linearSearch(-1)?.data, -1)
+        assertEquals(strList.linearSearch("A")?.data, "A")
+    }
+
 
     @Test
     fun sampleInsertionSort(){

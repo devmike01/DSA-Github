@@ -7,6 +7,9 @@ import dev.gbenga.dsa.collections.Queue
 import dev.gbenga.dsa.collections.QueueImpl
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
+import dev.gbenga.dsa.collections.list.linearFilter
+import dev.gbenga.dsa.collections.list.linearFind
+import dev.gbenga.dsa.startWithIgnoreCase
 import dev.gbenga.dsagithub.base.AppViewModel
 import dev.gbenga.dsagithub.base.MenuIcon
 import dev.gbenga.dsagithub.base.MenuId
@@ -47,7 +50,9 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
         const val REFRESH_SCREEN = "HomeViewModel.REFRESH_SCREEN"
         const val EXPAND_SEARCH = "HomeViewModel.EXPAND_SEARCH"
         const val CACHED_MENU ="HomeViewModel.CACHED_MENU"
+        const val QUERY = "HomeViewModel.QUERY"
     }
+
 
 
     fun setExpandSearch(){
@@ -59,8 +64,8 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
     }
 
     fun loadMoreGithubUsers(){
+        if (_endQueue.isEmpty())return
         viewModelScope.launch {
-            //val last = _homeUiState.value.
             favouriteRepository.getUsers(_endQueue.dequeue().also {
                 println("_endQueue: $it")
             }).collectResultForUi()
@@ -76,6 +81,8 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
         }
 
     }
+
+    fun getSearchQuery(): String = savedState[QUERY] ?: ""
 
     fun updateStack(value: Int){
         val temp : Queue<Int> = QueueImpl(ENDLESS_SCROLL_SIZE)
@@ -101,7 +108,7 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
                 usersState.getOrDefault(LinkedListImpl()).forEach { user ->
                     _userList.append(user)
                 }
-                _userList.forEach {
+                _userList.linearFilter { it.login.startWithIgnoreCase(savedState[QUERY] ?: "") }.forEach {
                     users.append(it)
                 }
 
@@ -122,9 +129,7 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
         }
     }
 
-
     fun loadMenus(){
-
         viewModelScope.launch {
             val cachedMenuItem = savedState.get<LinkedList<MenuItem>?>(CACHED_MENU)
             if (cachedMenuItem == null){
@@ -225,6 +230,17 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
     }
 
 
+    fun searchUsers(query: String){
+       // val userList = _userList.clone()
+        savedState[QUERY] = query
+        println("mojo: ${query.lowercase()}")
+        viewModelScope.launch {
+            _homeUiState.update {
+                it.copy(users = UiState.Success(_userList.clone().linearFilter {
+                    it.login.startWithIgnoreCase(query) }))
+            }
+        }
+    }
 
 
 }

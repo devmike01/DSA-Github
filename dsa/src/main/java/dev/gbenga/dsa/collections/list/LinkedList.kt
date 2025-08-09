@@ -26,14 +26,16 @@ interface LinkedList<T> : Collections<T> {
     fun reverse()
     fun bubbleSort(predicate: (Node<T>) -> Boolean) : Node<T>?
     fun bubbleSort(): Node<T>?
-    fun linearSearch(): Node<T>?
+    fun linearSearch(query: T): Node<Comparable<T>>?
     fun <R> map(onMap: (T) -> R): LinkedList<R>
+    fun clone(): LinkedList<T>
     fun clear()
 }
 
 class LinkedListImpl<T> : LinkedList<T> {
 
     private var head: Node<T>? = null
+    private var tail: Node<T>? = null
 
     private var _size =0
     override fun peekHeadNode(): Node<T>? {
@@ -59,24 +61,15 @@ class LinkedListImpl<T> : LinkedList<T> {
         val newNode = Node(value)
         if (head  == null){
             head = newNode
+            tail = newNode
             return
         }
-
-        var current = head
-        while (current?.next != null){
-            current = current.next
-        }
-        current?.next = newNode
+        tail?.next = newNode
+        tail = newNode
     }
 
 
-    override fun lastOrNull(): T? {
-        var cur = head
-        while (cur?.next != null){
-            cur = cur.next
-        }
-        return cur?.data
-    }
+    override fun lastOrNull(): T? = tail?.data
 
     private fun decrementSize(){
         if (_size > 0){
@@ -120,8 +113,6 @@ class LinkedListImpl<T> : LinkedList<T> {
     }
 
 
-
-
     override fun reverse(){
         if (head ==null){
             return
@@ -142,7 +133,7 @@ class LinkedListImpl<T> : LinkedList<T> {
         var swapped: Boolean = false
 
         when(head?.data){
-            is Int -> {
+            is Int, Float -> {
                 do {
                     var intCurrent = head as? Node<Int>
                     swapped = false
@@ -202,18 +193,37 @@ class LinkedListImpl<T> : LinkedList<T> {
         return head
     }
 
-    override fun linearSearch(): Node<T>? {
-        TODO("Not yet implemented")
+    override fun linearSearch(query: T) : Node<Comparable<T>>?{
+        try {
+            var current : Node<Comparable<T>>? = head  as? Node<Comparable<T>>
+            while (current != null && query != current.data){
+                current = current.next
+            }
+            //query: T
+            return current
+        }catch (e: ClassCastException){
+            throw UnsupportedOperationException("$query is not a supported type")
+        }
     }
 
     override fun <R> map(transform: (T) -> R): LinkedList<R> {
-        val linkedList = LinkedListImpl<R>()
+        val result = LinkedListImpl<R>()
         var curr : Node<T>? = head
         while (curr != null){
-            linkedList.append(transform(curr.data))
+            result.append(transform(curr.data))
             curr = curr.next
         }
-        return linkedList
+        return result
+    }
+
+    override fun clone(): LinkedList<T> {
+        val result = LinkedListImpl<T>()
+        var curr : Node<T>? = head
+        while (curr != null){
+            result.append(curr.data)
+            curr = curr.next
+        }
+        return result
     }
 
 
@@ -222,7 +232,7 @@ class LinkedListImpl<T> : LinkedList<T> {
     }
 
     override fun insertionSort(){
-      //  insertionSortString<T>()
+
     }
 
     private fun <T: Comparable<T>> insertionSortString(): Node<T>?{
@@ -370,6 +380,29 @@ class LinkedListImpl<T> : LinkedList<T> {
 }
 
 
+fun <T> LinkedList<T>.linearFind(test: (T) -> Boolean): T?{
+    var current : Node<T>? = peekHeadNode()
+    while (current != null){
+        if (test(current.data)){
+            return current.data
+        }
+        current = current.next
+    }
+    return null
+}
+
+fun <T> LinkedList<T>.linearFilter(test: (T) -> Boolean): LinkedList<T>{
+    var result: LinkedList<T> = LinkedListImpl()
+    var current : Node<T>? = peekHeadNode()
+    while (current != null){
+        if (test(current.data)){
+            result.append(current.data)
+        }
+        current = current.next
+    }
+
+    return result
+}
 
 
 inline fun <reified T> LinkedList<T>.toArray(): Array<T?>{
