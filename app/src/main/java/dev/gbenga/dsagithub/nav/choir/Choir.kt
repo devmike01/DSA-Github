@@ -2,6 +2,7 @@ package dev.gbenga.dsagithub.nav.choir
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -16,7 +17,9 @@ import dev.gbenga.dsa.collections.HashMap
 import dev.gbenga.dsa.collections.QueueImpl
 import dev.gbenga.dsa.collections.Stack
 import dev.gbenga.dsa.collections.StackImpl
-import dev.gbenga.dsagithub.nav.FakeCache
+import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsagithub.MainActivity
+import dev.gbenga.dsagithub.base.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,17 +52,16 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
 
     val routes = routeBuilder(choir)
 
+    val activity = LocalActivity.current as MainActivity
+
     var currentRoute = remember { mutableStateOf<Any?>(null) }
     var currentRouteKey by rememberSaveable { mutableStateOf<String?>(null) }
-    var isInitial by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        if (isInitial){
-            choir.navigate(initialDestination)
-            isInitial = false
-        }else{
-            choir.restore(routes)
+        activity.getRoutes()?.let {
+            choir.restore(it)
         }
+        choir.navigate(initialDestination)
     }
 
     LaunchedEffect(Unit) {
@@ -76,7 +78,9 @@ fun ChoirNavHost(choir : Choir, initialDestination: Any,
                 }
                 NavType.ADD, NavType.RESTORED  -> {
                     currentRoute.value =  navNode.route
-                    currentRouteKey = navNode.key.toString()
+                    currentRouteKey = navNode.key.toString().also { key ->
+                        activity.setRoute(key)
+                    }
                 }
                 else ->{
                     Log.d("ChoirNavHost", "init route")
@@ -186,13 +190,12 @@ class FlowNavNodeStack<K: Comparable<K>>(capacity: Int,
 
 
 
-class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCache.getInstance()) {
+class Choir() {
 
 
     companion object{
         const val CACHE_KEY = "Choir.CACHE_KEY"
         const val INITIAL_ROUTE_CAPACITY = 10
-        const val LOAD_FACTOR = .75
     }
 
     var argMap : CustomMap<String?, Any> = HashMap() // key is object's qualifiedName name
@@ -203,21 +206,19 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
     fun last() = _routes.peekOrNull()
 
 
-    fun restore(routes: CustomMap<Any, Any>){
-        val cachedArgs : CustomMap<String?, Any>? = fakeCache.getOrNull(CACHE_KEY)
-        cachedArgs?.keys()?.apply { reverse() }?.forEach { cache ->
-            cachedArgs.getOrNull(cache)?.let { value ->
-                cache?.let { key ->
-                    argMap[key] = value
-                    val clazz = Class.forName(key).kotlin
-                    _routes.silentPush(NavNode(
-                        key = clazz,
-                        route = routes.getOrNull(clazz)))
-                }
-            }
-        }
-        _routes.stack.pop().let {
-            _routes.pushNotify(it)
+    fun restore(routes: LinkedList<String>){
+        if (routes.size() < 1) return
+        val routeKey = Class.forName( routes.peekTailOrNull()!!.data)::class
+        _routes.pushNotify(NavNode(
+            key = routeKey,
+            route = registeredRoutes.getOrNull(routeKey)))
+        routes.forEach { key ->
+            Logger.Holder.instance.d("LinkedList", key)
+            val routeKey = Class.forName(key)::class
+            _routes.silentPush(NavNode(
+                key = routeKey,
+                route = registeredRoutes.getOrNull(routeKey))
+            )
         }
     }
 
@@ -225,7 +226,6 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
         val route = _routes.stack.peek()?.key.toString()
         argMap.remove(route)
         _routes.popNotify(onLast=onLast)
-        fakeCache[CACHE_KEY] = argMap
     }
 
     internal inline fun <reified T: Any> asRoute(): T?{
@@ -236,7 +236,6 @@ class Choir(private val fakeCache : FakeCache<CustomMap<String?, Any>> = FakeCac
     fun navigate(route: Any){
         registeredRoutes.getOrNull(route::class)?.let {
             argMap[route::class.qualifiedName] = route
-            fakeCache[CACHE_KEY] = argMap
             val navNode = NavNode(route::class, it)
             _routes.pushNotify(navNode)
         }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,12 +80,17 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
 
     val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
     val favUsersState by homeViewModel.favUserUiState.collectAsStateWithLifecycle()
+    val selectedPage by homeViewModel.selectedPage.collectAsStateWithLifecycle()
     var usersState by remember { mutableStateOf<LinkedList<User>>(LinkedListImpl<User>()) }
     var showLoading by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var searchTextValue by remember { mutableStateOf(homeViewModel.getSearchQuery()) }
     var menuItems by remember { mutableStateOf<LinkedList<MenuItem>>(LinkedListImpl<MenuItem>()) }
     var refresh by rememberSaveable { mutableStateOf(false) }
+
+
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
 
 
     DefaultScaffold(topBarTitle = {
@@ -102,7 +108,6 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
         }) {
 
 
-        val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
         LaunchedEffect(Unit) {
@@ -138,7 +143,7 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
                 }
                 is UiState.Error ->{
                     showLoading = false
-                    scope.launch {
+                    coroutineScope.launch {
                         snackbarHostState.showSnackbar(users.errorMsg)
                     }
                 }
@@ -151,15 +156,24 @@ fun HomeScreen(navController: Choir, homeViewModel: HomeViewModel = koinViewMode
             }
         }
 
+        LaunchedEffect(selectedPage) {
+            pagerState.animateScrollToPage(selectedPage)
+        }
 
         LaunchedEffect(Unit) {
             homeViewModel.loadMenus()
             homeViewModel.loadGithubUsers()
             homeViewModel.loadFavourite()
         }
-       HomeContent(usersState, favUsersState.favUsers, onLoadMore = {
+       HomeContent(usersState,
+           pagerState = pagerState,
+           selectedPage = selectedPage,
+           favoriteUsers =favUsersState.favUsers,
+           onLoadMore = {
            homeViewModel.loadMoreGithubUsers()
-       }){ isFavourite,  userName, avatarUrl ->
+       }, onTabClick ={
+               homeViewModel.changePage(it)
+           }){ isFavourite,  userName, avatarUrl ->
          navController.navigate(GithubDetails(userName, avatarUrl,isFavourite))
        }
     }
@@ -215,13 +229,14 @@ fun SimpleSearchBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
+fun HomeContent(users: LinkedList<User>,
+                selectedPage: Int,
+                pagerState: PagerState,
+                favoriteUsers: LinkedList<Favourite>,
                 onLoadMore: () -> Unit,
-                onUserClick: (Boolean, String, String) -> Unit){
+                onTabClick: (Int) -> Unit = {},
+                onUserClick: (Boolean, String, String) -> Unit = {a, b, c ->}){
 
-    val pagerState = rememberPagerState(pageCount = { 2 })
-    var selectedPage by rememberSaveable { mutableIntStateOf(0) }
-    val coroutineScope = rememberCoroutineScope()
 
     Column {
         PrimaryTabRow(selectedTabIndex = pagerState.currentPage,
@@ -230,9 +245,7 @@ fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
                 Tab(
                     selected = pagerState.currentPage == selectedPage,
                     onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
+                        onTabClick(index)
                     },
                     text = {
                         Text(
@@ -244,8 +257,7 @@ fun HomeContent(users: LinkedList<User>, favoriteUsers: LinkedList<Favourite>,
                 )
             }
         }
-        HorizontalPager(pagerState) {
-            selectedPage = it
+        HorizontalPager(pagerState, userScrollEnabled = false) {
             when(it){
                 0 -> {
                     HomeUserListView(users, onUserClick, onLoadMore)

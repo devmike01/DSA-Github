@@ -3,6 +3,7 @@ package dev.gbenga.dsa
 import dev.gbenga.dsa.collections.list.LinkedList
 import dev.gbenga.dsa.collections.list.LinkedListImpl
 import dev.gbenga.dsa.collections.list.Node
+import dev.gbenga.dsa.collections.list.bubbleSorted
 import dev.gbenga.dsa.collections.list.linkedListOf
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,30 +62,22 @@ class LinkedListTest {
         assertTrue(linkedList == linkedListOf(0,3,1,10,2))
     }
 
-//    @Test
-//    fun testInsertionSort(){
-//        val linkedList = LinkedListImpl<Int>()
-//        linkedList.append(2)
-//        linkedList.append(10)
-//        linkedList.append(1)
-//        linkedList.append(3)
-//        // Todo: implement insertion sort later to test
-//    }
-//
-//
-
-    @Test(expected = UnsupportedOperationException::class)
-    fun testSortUnSupported(){
-        val unSupportedTypes = linkedListOf(Any(), Any())
-        unSupportedTypes.bubbleSort()
+    @Test
+    fun testLinkedListJoin(){
+        val intList = linkedListOf(2,1,5,0,10, 3, -1)
+        val intList2 = linkedListOf(100, 109, 102)
+        var li = (intList2 + intList) + intList2
+       // li += intList
+        println("MANGO: $li")
     }
+
 
     @Test
     fun testBubbleSort(){
         val intList = linkedListOf(2,1,5,0,10, 3, -1)
-        intList.bubbleSort()
+        intList.bubbleSorted()
         val strList = linkedListOf("Mango", "Orange", "Apple", "Imbu")
-        strList.bubbleSort()
+        strList.bubbleSorted()
         assertTrue(intList == linkedListOf(-1, 0,1,2,3,5,10))
         assertTrue(strList == linkedListOf("Apple", "Imbu","Mango", "Orange"))
     }

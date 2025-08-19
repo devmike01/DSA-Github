@@ -1,9 +1,9 @@
 package dev.gbenga.dsa.collections.list
 
 import dev.gbenga.dsa.collections.Collections
+import java.io.Serializable
 
-
-inline fun <reified T> linkedListOf(vararg values: T): LinkedList<T>{
+ fun <T> linkedListOf(vararg values: T): LinkedList<T>{
     val linkedList : LinkedList<T> = LinkedListImpl()
     values.forEach {
         linkedList.append(it)
@@ -11,8 +11,63 @@ inline fun <reified T> linkedListOf(vararg values: T): LinkedList<T>{
     return linkedList
 }
 
-interface LinkedList<T> : Collections<T> {
+ fun <T> emptyLinkedList(): LinkedList<T> = EmptyLinkedList as LinkedList<T>
 
+
+internal object EmptyLinkedList : LinkedList<Nothing>, Serializable {
+    override fun join(values: LinkedList<Nothing>): LinkedList<Nothing> = LinkedListImpl<Nothing>()
+
+    override fun plus(values: LinkedList<Nothing>): LinkedList<Nothing> = LinkedListImpl<Nothing>()
+
+    override fun peekTailOrNull(): Node<Nothing>? = null
+
+    override fun peekHeadNode(): Node<Nothing>? = null
+
+    override fun peekHead(): Nothing? =null
+
+    override fun removeHead(): Nothing? = null
+
+    override fun append(value: Nothing) { }
+
+    override fun lastOrNull(): Nothing? = null
+
+    override fun prepend(value: Nothing)  = Unit
+
+    override fun insertionSort() = Unit
+
+    override fun swap(x: Nothing?, y: Nothing?) = Unit
+
+    override fun forEach(block: (Nothing) -> Unit) = Unit
+
+    override fun size(): Int =0
+
+    override fun reverse() = Unit
+
+    override fun bubbleSort(predicate: (Node<Nothing>) -> Boolean): Node<Nothing>? = null
+
+    override fun linearSearch(query: Nothing): Node<Comparable<Nothing>>? = null
+
+    override fun <R> map(onMap: (Nothing) -> R): LinkedList<R> = LinkedListImpl()
+
+    override fun clone(): LinkedList<Nothing> = LinkedListImpl()
+
+    override fun clear() {
+    }
+
+    override fun isEmpty(): Boolean = !isNotEmpty()
+
+    override fun isNotEmpty(): Boolean = false
+
+    override fun linearSearch(predicate: (Nothing) -> Boolean): Nothing? = null
+
+    override fun remove(predicate: (Nothing?) -> Boolean): Boolean = false
+
+}
+
+interface LinkedList<T> : Collections<T> {
+    fun join(values: LinkedList<T>): LinkedList<T>
+    operator fun plus(values: LinkedList<T>): LinkedList<T>
+    fun peekTailOrNull(): Node<T>?
     fun peekHeadNode(): Node<T>?
     fun peekHead(): T?
     fun removeHead(): T?
@@ -25,7 +80,7 @@ interface LinkedList<T> : Collections<T> {
     fun size(): Int
     fun reverse()
     fun bubbleSort(predicate: (Node<T>) -> Boolean) : Node<T>?
-    fun bubbleSort(): Node<T>?
+    //fun <T: Comparable<T>> bubbleSort(): Node<T>?
     fun linearSearch(query: T): Node<Comparable<T>>?
     fun <R> map(onMap: (T) -> R): LinkedList<R>
     fun clone(): LinkedList<T>
@@ -38,6 +93,42 @@ class LinkedListImpl<T> : LinkedList<T> {
     private var tail: Node<T>? = null
 
     private var _size =0
+
+    override fun plus(values: LinkedList<T>): LinkedList<T> {
+        val newList : LinkedList<T> = LinkedListImpl<T>()
+        var current= peekHeadNode()
+        var hasJoined = false
+        while (current != null){
+            newList.append(current.data)
+            current = current.next
+        }
+
+        var current2 = values.peekHeadNode()
+        while (current2 != null){
+            newList.append(current2.data)
+            current2 = current2.next
+        }
+        return newList
+    }
+
+    override fun join(values: LinkedList<T>): LinkedList<T> {
+        val newList : LinkedList<T> = LinkedListImpl<T>()
+        var current= peekHeadNode()
+        var hasJoined = false
+        while (current != null){
+            if (current.next == null && !hasJoined){
+                current.next = values.peekHeadNode()
+                hasJoined = true
+            }
+            newList.append(current.data)
+            current = current.next
+        }
+        return newList
+    }
+
+
+    override fun peekTailOrNull(): Node<T>? = tail
+
     override fun peekHeadNode(): Node<T>? {
         return head
     }
@@ -126,49 +217,6 @@ class LinkedListImpl<T> : LinkedList<T> {
             curNode = temp
         }
         head = prev
-    }
-
-    override fun bubbleSort(): Node<T>?{
-        if (head ==null || null == head?.next) return head
-        var swapped: Boolean = false
-
-        when(head?.data){
-            is Int, Float -> {
-                do {
-                    var intCurrent = head as? Node<Int>
-                    swapped = false
-                    while (intCurrent?.next != null){
-                        if (intCurrent.data > intCurrent.next!!.data){
-                            val temp = intCurrent.data
-                            intCurrent.data = intCurrent.next!!.data
-                            intCurrent.next?.data = temp
-                            swapped = true
-                        }
-                        intCurrent = intCurrent.next
-                    }
-                }while (swapped)
-
-            }
-            is String -> {
-                do {
-                    var strCurrent = head as? Node<String>
-                    swapped = false
-                    while (strCurrent?.next != null){
-                        if (strCurrent.data.lowercase() > strCurrent.next!!.data.lowercase()){
-                            val temp = strCurrent.data
-                            strCurrent.data = strCurrent.next!!.data
-                            strCurrent.next!!.data = temp
-                            swapped = true
-                        }
-                        strCurrent = strCurrent.next
-                    }
-                }while (swapped)
-            }
-            else -> {
-                throw UnsupportedOperationException("Type ${head?.data} is not supported. Supported types: {str, int}")
-            }
-        }
-        return head
     }
 
 
@@ -419,4 +467,33 @@ inline fun <reified T> LinkedList<T>.toArray(): Array<T?>{
         array
     } ?: emptyArray()
 
+}
+
+fun <T> Array<T>.toMyLinkedList(): LinkedList<T>{
+    val linkedList = LinkedListImpl<T>()
+    forEach {
+        linkedList.append(it)
+    }
+    return linkedList
+}
+
+fun <T: Comparable<T>>  LinkedList<T>.bubbleSorted(): Node<T>?{
+    val head = peekHeadNode()
+    if (head ==null || null == head.next) return head
+    var swapped: Boolean = false
+
+    do {
+        var current = head as? Node<Comparable<T>>
+        swapped = false
+        while (current?.next != null){
+            if (current.data > (current.next!!.data as T)){
+                val temp = current.data
+                current.data = current.next!!.data
+                current.next?.data = temp
+                swapped = true
+            }
+            current = current.next
+        }
+    }while (swapped)
+    return head as Node<T>?
 }

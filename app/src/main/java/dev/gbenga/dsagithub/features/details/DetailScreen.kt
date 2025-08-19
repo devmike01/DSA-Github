@@ -1,5 +1,8 @@
 package dev.gbenga.dsagithub.features.details
 
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -42,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -50,7 +51,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import dev.gbenga.dsa.collections.list.LinkedList
-import dev.gbenga.dsagithub.MainActivity
 import dev.gbenga.dsagithub.R
 import dev.gbenga.dsagithub.base.DefaultScaffold
 import dev.gbenga.dsagithub.base.Dimens
@@ -75,7 +75,8 @@ fun DetailScreen(navController: Choir,
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var refresh by rememberSaveable { mutableStateOf(false) }
-    val activity = LocalContext.current.let { it as MainActivity }
+    var favPressed by remember { mutableStateOf(false) }
+    var atEnd by remember { mutableStateOf(false) }
 
     LaunchedEffect(refresh) {
         if (refresh)return@LaunchedEffect
@@ -121,12 +122,18 @@ fun DetailScreen(navController: Choir,
                 }
             }else{
                 FloatingActionButton(onClick = {
+                    atEnd = !atEnd
                     avatarUrl?.let {
                         detailViewModel.favoriteUser(userName, avatarUrl)
                     }
                 }) {
-                    Icon(Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite user")
+
+                    val image = AnimatedImageVector.animatedVectorResource(R.drawable.ic_fave)
+                    Image(
+                        painter = rememberAnimatedVectorPainter(image, atEnd),
+                        contentDescription = "Favourite",
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
 

@@ -14,11 +14,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryOwner
+import dev.gbenga.dsa.collections.list.LinkedList
+import dev.gbenga.dsa.collections.list.LinkedListImpl
+import dev.gbenga.dsa.collections.list.toArray
+import dev.gbenga.dsa.collections.list.toMyLinkedList
+import dev.gbenga.dsagithub.SearchManager.Companion.ROUTES
 import dev.gbenga.dsagithub.features.details.DetailScreen
 import dev.gbenga.dsagithub.nav.AppNavHost
 import dev.gbenga.dsagithub.nav.GithubDetails
 import dev.gbenga.dsagithub.nav.Screen
 import dev.gbenga.dsagithub.ui.theme.DSAGithubTheme
+import kotlin.reflect.KClass
 
 class MainActivity : ComponentActivity() {
 
@@ -37,34 +43,24 @@ class MainActivity : ComponentActivity() {
 
     }
 
-
-
-    fun setString(key: String="h", value: String){
-        savedRegistry.setString(value)
-        Log.d("MainActivity", "_bundle ---> $value")
+    fun setRoute(route: String){
+        savedRegistry.setRoutes(route)
     }
 
-    override fun onResume() {
-        super.onResume()
-        Log.d("MainActivity", "_bundle --ddd-> ${savedRegistry.getQuery()}")
+    fun getRoutes(): LinkedList<String>? {
+        return savedRegistry.getRoutes()
     }
+
 }
 
 
 class SearchManager(registryOwner: SavedStateRegistryOwner) : SavedStateRegistry.SavedStateProvider {
     companion object {
         private const val PROVIDER = "search_manager"
-        private const val QUERY = "query"
+        private const val ROUTES = "ROUTES"
     }
 
-    private var query: String? = null
-
-
-    fun setString(value: String){
-        query = value
-    }
-
-    fun getQuery() = query
+    private var screenRouteKeys: LinkedList<String>? = LinkedListImpl<String>()
 
     init {
         // Register a LifecycleObserver for when the Lifecycle hits ON_CREATE
@@ -79,13 +75,23 @@ class SearchManager(registryOwner: SavedStateRegistryOwner) : SavedStateRegistry
                 val state = registry.consumeRestoredStateForKey(PROVIDER)
 
                 // Apply the previously saved state
-                query = state?.getString(QUERY)
+                screenRouteKeys = state?.getStringArray(ROUTES)?.toMyLinkedList()
             }
         })
     }
 
+    fun setRoutes(route: String){
+        if (screenRouteKeys?.linearSearch(route) == null){
+            screenRouteKeys?.append(route)
+        }
+    }
+
+    fun getRoutes(): LinkedList<String>?{
+        return screenRouteKeys
+    }
+
     override fun saveState(): Bundle {
-        return bundleOf(QUERY to query)
+        return bundleOf(ROUTES to screenRouteKeys?.toArray())
     }
 
 }

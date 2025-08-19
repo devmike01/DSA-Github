@@ -91,4 +91,6 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(project(":dsa"))
     implementation(kotlin("reflect"))
+    // animation
+    implementation(libs.androidx.animation.graphics.android)
 }

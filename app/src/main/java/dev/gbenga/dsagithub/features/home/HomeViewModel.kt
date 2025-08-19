@@ -40,6 +40,9 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
     private val _menus = MutableSharedFlow<LinkedList<MenuItem>>( )
     val menus : SharedFlow<LinkedList<MenuItem>> = _menus.asSharedFlow() //LinkedListImpl<MenuItem>()
 
+    private val _selectedPage = MutableStateFlow<Int>(0)
+    val selectedPage : StateFlow<Int> = _selectedPage.asStateFlow()
+
     private val _userList : LinkedList<User> = LinkedListImpl()
     private var _endQueue: Queue<Int> = QueueImpl<Int>(ENDLESS_SCROLL_SIZE)
     private var oldMenus : LinkedList<MenuItem>? =null
@@ -51,9 +54,13 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
         const val EXPAND_SEARCH = "HomeViewModel.EXPAND_SEARCH"
         const val CACHED_MENU ="HomeViewModel.CACHED_MENU"
         const val QUERY = "HomeViewModel.QUERY"
+        const val CURRENT_PAGE = "HomeViewModel.CURRENT_PAGE"
     }
 
 
+    fun changePage(page: Int=0){
+        _selectedPage.value =savedState[CURRENT_PAGE] ?: page
+    }
 
     fun setExpandSearch(){
         savedState[EXPAND_SEARCH] = !(savedState.get<Boolean>(EXPAND_SEARCH) == true)
@@ -233,7 +240,6 @@ class HomeViewModel(private val favouriteRepository: FavouriteRepository,
     fun searchUsers(query: String){
        // val userList = _userList.clone()
         savedState[QUERY] = query
-        println("mojo: ${query.lowercase()}")
         viewModelScope.launch {
             _homeUiState.update {
                 it.copy(users = UiState.Success(_userList.clone().linearFilter {
